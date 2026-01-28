@@ -1,0 +1,11 @@
+// Estilos para el drawer móvil
+:host {
+  // Asegurar que el drawer tenga el z-index correcto
+  .drawer-overlay {
+    z-index: 40;
+  }
+  
+  .drawer-sidebar {
+    z-index: 50;
+  }
+}

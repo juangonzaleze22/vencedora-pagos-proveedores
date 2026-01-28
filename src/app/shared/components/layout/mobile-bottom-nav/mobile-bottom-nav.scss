@@ -1,0 +1,4 @@
+// Safe area para dispositivos con notch (iPhone X y superiores)
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

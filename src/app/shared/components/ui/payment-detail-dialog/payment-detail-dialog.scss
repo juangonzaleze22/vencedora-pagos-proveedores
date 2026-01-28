@@ -1,0 +1,15 @@
+::ng-deep .payment-detail-dialog {
+  .p-dialog-header {
+    @apply border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .p-dialog-content {
+    @apply p-0;
+  }
+
+  .p-dialog-footer {
+    @apply border-t border-gray-200 dark:border-gray-700;
+  }
+}
+
+

@@ -1,0 +1,75 @@
+<div class="supplier-autocomplete-container relative w-full">
+  <div class="flex gap-2 w-full">
+    <p-iconfield iconPosition="left" class="flex-1 w-full">
+      <p-inputicon>
+        <i class="pi pi-search text-gray-400"></i>
+      </p-inputicon>
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onInputChange($event)"
+        (focus)="onInputFocus()"
+        (blur)="onInputBlur()"
+        (keydown)="onKeyDown($event)"
+        [placeholder]="placeholder"
+        class="w-full py-3 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-lg shadow-sm" />
+    </p-iconfield>
+    <p-button
+      label="Buscar →"
+      icon="pi pi-search"
+      (onClick)="onSearchClick()"
+      [disabled]="!searchQuery || searchQuery.trim().length < 1"
+      class="flex-shrink-0" />
+  </div>
+
+  <!-- Dropdown de sugerencias -->
+  @if (showDropdown && suggestions.length > 0) {
+    <div class="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-96 overflow-y-auto" style="top: 100%;">
+      @for (supplier of suggestions; track supplier.id) {
+        <div
+          class="px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+          [class.bg-primary/10]="selectedIndex === $index"
+          [class.bg-gray-50]="selectedIndex === $index"
+          [class.dark:bg-gray-700]="selectedIndex === $index"
+          (click)="selectSupplier(supplier)"
+          (mouseenter)="selectedIndex = $index">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900 dark:text-white text-base mb-1.5">
+                {{ supplier.companyName }}
+              </div>
+              <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
+                @if (supplier.taxId) {
+                  <span class="text-gray-500 dark:text-gray-400">RIF: <span class="text-gray-700 dark:text-gray-300">{{ supplier.taxId }}</span></span>
+                }
+                <span class="text-gray-400 dark:text-gray-500">•</span>
+                <span class="text-gray-600 dark:text-gray-400">Deuda: <span class="text-red-500 dark:text-red-400">${{ supplier.totalDebt.toFixed(2) }}</span></span>
+              </div>
+            </div>
+            <div class="flex-shrink-0 text-right">
+              <p-tag
+                [value]="supplier.status === 'PENDING' ? 'Pendiente' : 'Completado'"
+                [severity]="supplier.status === 'PENDING' ? 'warn' : 'success'"
+                class="text-xs" />
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (showDropdown && suggestions.length === 0 && searchQuery.length >= 1 && !loading) {
+    <div class="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 text-center" style="top: 100%;">
+      <p class="text-sm text-gray-500 dark:text-gray-400">No se encontraron distribuidores</p>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 text-center" style="top: 100%;">
+      <i class="pi pi-spin pi-spinner text-primary"></i>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Buscando...</p>
+    </div>
+  }
+</div>
+

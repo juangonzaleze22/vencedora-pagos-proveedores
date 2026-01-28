@@ -1,0 +1,46 @@
+# Reglas de Cursor para Vencedora Pagos Proveedores
+
+## 🎯 REGLA PRINCIPAL - SIEMPRE APLICAR
+
+**TODOS los componentes UI DEBEN usar PrimeNG cuando sea posible.**
+
+## 📋 Reglas Obligatorias
+
+### 1. Componentes UI
+- ✅ SIEMPRE usar PrimeNG para inputs, botones, tablas, diálogos, etc.
+- ✅ NO crear componentes HTML nativos cuando PrimeNG tiene equivalente
+- ✅ Importar SOLO los módulos específicos necesarios
+- ✅ Usar Tailwind CSS para layout y espaciado
+
+### 2. Estructura de Archivos
+- Contextos en: `src/app/contexts/`
+- Componentes compartidos en: `src/app/shared/components/`
+- Servicios en: `src/app/shared/services/`
+- Modelos en: `src/app/shared/models/`
+
+### 3. Patrones de Código
+- Usar Angular Signals para estado reactivo
+- Usar ReactiveFormsModule para formularios
+- Documentar código complejo con JSDoc
+- Seguir convenciones de nombres de Angular
+
+### 4. Diseño
+- PrimeNG para componentes UI
+- Tailwind CSS para utilidades y layout
+- Mantener consistencia visual
+- Responsive design por defecto
+
+## 📚 Referencias
+
+Consultar siempre:
+- `context/02-PRIMENG_RULES.md` - Reglas detalladas de PrimeNG
+- `context/03-COMPONENT_PATTERNS.md` - Patrones de implementación
+- `context/01-DESIGN_SYSTEM.md` - Design system completo
+
+## 🔄 Flujo de Trabajo
+
+1. Al crear componente: Verificar si PrimeNG tiene equivalente
+2. Al maquetar: Usar PrimeNG + Tailwind
+3. Al importar: Solo módulos específicos necesarios
+4. Al estilizar: Tailwind para layout, PrimeNG para componentes
+

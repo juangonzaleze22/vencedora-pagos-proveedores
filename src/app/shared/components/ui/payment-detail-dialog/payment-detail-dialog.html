@@ -1,0 +1,219 @@
+<p-toast />
+
+<p-dialog
+  [header]="paymentTitle()"
+  [(visible)]="_visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '1200px' }"
+  [closable]="true"
+  [styleClass]="'payment-detail-dialog'"
+  (onHide)="onDialogClose()"
+  (visibleChange)="visibleChange.emit($event)">
+  
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+    </div>
+  } @else if (payment(); as paymentData) {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Side: Payment Details -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <!-- Información de la Transacción -->
+        <app-app-card>
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Información de la Transacción</h3>
+              @if (paymentStatus() === 'verified') {
+                <span class="px-3 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold uppercase tracking-wider">
+                  Confirmado
+                </span>
+              } @else if (paymentStatus() === 'deleted') {
+                <span class="px-3 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider">
+                  Eliminado
+                </span>
+              } @else {
+                <span class="px-3 py-1 rounded-md bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold uppercase tracking-wider">
+                  Pendiente
+                </span>
+              }
+            </div>
+          </div>
+          <div class="p-6 space-y-0">
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">ID de Pago</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">#{{ paymentData.id }}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Proveedor</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">
+                {{ paymentData.supplier?.companyName || 'N/A' }}
+              </p>
+            </div>
+            
+            @if (paymentData.supplier?.taxId) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">RIF / ID Fiscal</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">{{ paymentData.supplier?.taxId }}</p>
+              </div>
+            }
+            
+            @if (paymentData.confirmationNumber) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Nro. de Confirmación</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">{{ paymentData.confirmationNumber }}</p>
+              </div>
+            }
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Fecha de Pago</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">
+                {{ paymentData.paymentDate | date:'dd MMM yyyy, HH:mm' }}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Método de Pago</p>
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                  <i [class]="getPaymentMethodIcon(paymentData.paymentMethod) + ' text-primary text-sm'"></i>
+                  <p class="text-gray-900 dark:text-white text-sm font-bold">
+                    {{ getPaymentMethodLabel(paymentData.paymentMethod) }}
+                  </p>
+                </div>
+                @if (paymentData.isBolivares && paymentData.exchangeRate) {
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Tasa: Bs {{ paymentData.exchangeRate | number:'1.2-2' }}
+                  </p>
+                }
+              </div>
+            </div>
+            
+            @if (paymentData.senderName) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Emisor</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">{{ paymentData.senderName }}</p>
+              </div>
+            }
+            
+            @if (paymentData.senderEmail) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Email del Emisor</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">{{ paymentData.senderEmail }}</p>
+              </div>
+            }
+            
+            @if (paymentData.deleted && paymentData.deleteReason) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Motivo de Eliminación</p>
+                <p class="text-red-600 dark:text-red-400 text-sm font-bold">{{ paymentData.deleteReason }}</p>
+              </div>
+            }
+            
+            <div class="grid grid-cols-2 py-5 bg-primary/5 dark:bg-primary/10 -mx-6 px-6 mt-2">
+              <p class="text-primary text-sm font-bold">Monto Total</p>
+              <div class="flex flex-col gap-1">
+                <p class="text-primary text-xl font-black leading-none">$ {{ paymentData.amount.toFixed(2) }} USD</p>
+                @if (paymentData.isBolivares && paymentData.amountInBolivares) {
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Bs {{ paymentData.amountInBolivares | number:'1.2-2' }}
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        </app-app-card>
+        
+        <!-- Actions Area -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col gap-3">
+          <p-button
+            label="Imprimir Reporte"
+            icon="pi pi-print"
+            severity="info"
+            styleClass="w-full"
+            (onClick)="onPrint()" />
+          <p-button
+            label="Compartir Detalle"
+            icon="pi pi-share-alt"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="w-full"
+            (onClick)="onShare()" />
+        </div>
+      </div>
+      
+      <!-- Right Side: Receipt Preview -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <app-app-card>
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-image text-gray-400"></i>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Comprobante de Pago</h3>
+              </div>
+              @if (paymentData.receiptFile) {
+                <div class="flex items-center gap-1">
+                  <p-button
+                    label="Descargar JPG"
+                    icon="pi pi-download"
+                    severity="primary"
+                    [text]="true"
+                    styleClass="text-sm"
+                    (onClick)="onDownloadReceipt()" />
+                </div>
+              }
+            </div>
+          </div>
+          
+          <!-- Image Container -->
+          <div class="flex-1 bg-gray-100 dark:bg-gray-900 overflow-auto p-8 flex items-center justify-center min-h-[500px]">
+            @if (paymentData.receiptFile) {
+              <div class="relative group cursor-zoom-in max-w-full">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none rounded-lg"></div>
+                <app-lazy-image
+                  [src]="paymentData.receiptFile"
+                  [alt]="'Comprobante de pago #' + paymentData.id"
+                  width="100%"
+                  height="auto"
+                  objectFit="contain"
+                  [rounded]="true"
+                  [preview]="true"
+                  styleClass="shadow-2xl rounded-lg border border-gray-200 dark:border-gray-700 mx-auto transition-transform duration-300 transform origin-center" />
+              </div>
+            } @else {
+              <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 py-12">
+                <i class="pi pi-image text-6xl mb-4"></i>
+                <p class="text-sm font-medium">No hay comprobante disponible</p>
+              </div>
+            }
+          </div>
+          
+          <!-- Bottom Footer -->
+          @if (paymentData.receiptFile) {
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs text-gray-500">
+              <p>comprobante_PAG-{{ paymentData.id }}.jpg</p>
+              @if (paymentData.createdAt) {
+                <p>Subido el {{ paymentData.createdAt | date:'dd MMM yyyy, HH:mm' }}</p>
+              }
+            </div>
+          }
+        </app-app-card>
+      </div>
+    </div>
+  }
+  
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-3">
+      <p-button
+        label="Cerrar"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="onDialogClose()"
+        styleClass="min-w-[120px]" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+

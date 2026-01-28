@@ -1,0 +1,126 @@
+<app-app-header 
+  title="Lista de Distribuidores"
+  subtitle="Busque y consulte información de distribuidores registrados en el sistema" />
+
+<p-toast />
+
+<app-page-container maxWidth="5xl">
+  <div class="mb-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+    <p-button 
+      icon="pi pi-arrow-left"
+      label="Volver al Dashboard"
+      [text]="true"
+      (onClick)="onCancel()" />
+  </div>
+
+  <div class="space-y-0">
+    <!-- Búsqueda -->
+    <app-app-card>
+      <div class="max-w-2xl mx-auto">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="supplier-search">
+          Buscar Distribuidor
+        </label>
+        <app-supplier-autocomplete
+          placeholder="Ej: Nombre de la empresa o RIF"
+          [suggestions]="supplierSuggestions"
+          [loading]="searchLoading"
+          (search)="onSearch($event)"
+          (select)="onSupplierSelect($event)">
+        </app-supplier-autocomplete>
+        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <i class="pi pi-info-circle text-sm"></i>
+          Ingrese el nombre de la empresa o el RIF para buscar.
+        </p>
+      </div>
+    </app-app-card>
+
+    <!-- Información del Distribuidor -->
+    @if (selectedSupplier()) {
+      <app-app-card class="mt-0">
+        <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            Información del Distribuidor
+          </h3>
+          <p-tag
+            [value]="getStatusLabel(selectedSupplier()!.status)"
+            [severity]="getStatusSeverity(selectedSupplier()!.status)" />
+        </div>
+
+        <div class="p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Nombre de la Empresa -->
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+              <div class="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                <i class="pi pi-building text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre de la Empresa</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                  {{ selectedSupplier()!.companyName }}
+                </p>
+              </div>
+            </div>
+
+            <!-- RIF / ID Fiscal -->
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+              <div class="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
+                <i class="pi pi-id-card text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">RIF / ID Fiscal</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                  {{ selectedSupplier()!.taxId || 'N/A' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Deuda Total -->
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+              <div class="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg">
+                <i class="pi pi-dollar text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Deuda Total</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  $ {{ selectedSupplier()!.totalDebt.toFixed(2) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Último Pago -->
+            <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+              <div class="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
+                <i class="pi pi-calendar text-2xl"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Último Pago</p>
+                @if (selectedSupplier()!.lastPaymentDate) {
+                  <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                    {{ selectedSupplier()!.lastPaymentDate | date:'dd/MM/yyyy' }}
+                  </p>
+                  <p class="text-sm text-gray-400 dark:text-gray-500">
+                    {{ selectedSupplier()!.lastPaymentDate | date:'HH:mm' }}
+                  </p>
+                } @else {
+                  <p class="text-xl font-bold text-gray-400 dark:text-gray-500 mt-1">
+                    Sin pagos registrados
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="px-8 py-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+          <p-button
+            label="Ver Reporte Detallado"
+            icon="pi pi-chart-bar"
+            (onClick)="onViewDetails()" />
+        </div>
+      </app-app-card>
+    }
+  </div>
+</app-page-container>
+

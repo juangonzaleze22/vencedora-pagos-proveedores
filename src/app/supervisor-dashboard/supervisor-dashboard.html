@@ -1,0 +1,85 @@
+<app-app-header 
+  title="Dashboard"
+  subtitle="Bienvenido de nuevo, Supervisor" />
+
+<app-page-container>
+  <div class="space-y-8">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <app-stat-card
+        label="Pagos Pendientes"
+        [value]="statsValue.pendingPayments"
+        icon="pi pi-clock"
+        iconColor="yellow" />
+      
+      <app-stat-card
+        label="Pagos Procesados"
+        [value]="statsValue.processedPayments"
+        icon="pi pi-check-circle"
+        iconColor="green" />
+      
+      <app-stat-card
+        label="Total Proveedores"
+        [value]="statsValue.totalSuppliers"
+        icon="pi pi-users"
+        iconColor="blue" />
+      
+      <app-stat-card
+        label="Total Deuda"
+        [value]="'$ ' + statsValue.totalDebt.toFixed(2)"
+        icon="pi pi-dollar"
+        iconColor="red" />
+    </div>
+
+    <!-- Action Cards -->
+    <div>
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Acciones Principales</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <app-action-card
+          title="Registro de Proveedores"
+          description="Dar de alta una nueva empresa o proveedor en el sistema. Incluye validación de RIF y datos fiscales."
+          icon="pi pi-building"
+          iconColor="blue"
+          route="/providers/register"
+          linkText="Comenzar registro" />
+        
+        <app-action-card
+          title="Registrar Pago"
+          description="Ingresar detalles de una nueva transacción, adjuntar comprobantes y asignar al proveedor correspondiente."
+          icon="pi pi-wallet"
+          iconColor="green"
+          route="/payments/register"
+          linkText="Nuevo pago" />
+        
+        <app-action-card
+          title="Verificación de Pagos"
+          description="Validar transferencias Zelle y otros métodos mediante número de confirmación y montos."
+          icon="pi pi-check-square"
+          iconColor="indigo"
+          route="/payments/verify"
+          linkText="Verificar ahora" />
+        
+        <app-action-card
+          title="Reporte Detallado"
+          description="Generar y exportar reportes de cuentas por pagar, historial de transacciones y saldos adeudados."
+          icon="pi pi-chart-bar"
+          iconColor="purple"
+          route="/reports/detailed"
+          linkText="Ver reportes" />
+        
+        <app-action-card
+          title="Localizar Proveedor"
+          description="Búsqueda rápida de información de contacto y estado de proveedores específicos."
+          icon="pi pi-search"
+          iconColor="orange"
+          route="/providers/locate"
+          linkText="Buscar proveedor" />
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-6 text-center text-xs text-gray-400 dark:text-gray-500">
+      <p>© 2023 Sistema de Gestión Financiera. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</app-page-container>

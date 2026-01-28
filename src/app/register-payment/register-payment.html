@@ -1,0 +1,328 @@
+<app-app-header 
+  [title]="pageTitle()"
+  [subtitle]="pageSubtitle()" />
+
+<app-page-container maxWidth="2xl">
+  <div class="mb-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+    <p-button 
+      icon="pi pi-arrow-left"
+      label="Volver al Dashboard"
+      [text]="true"
+      (onClick)="onCancel()" />
+  </div>
+
+  <app-app-card>
+    <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Columna izquierda: Campos del formulario -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Nombre del Emisor y Correo -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="emisor">
+                Nombre del Emisor <span class="text-red-500">*</span>
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-user"></i>
+                </p-inputicon>
+                <input
+                  id="emisor"
+                  type="text"
+                  pInputText
+                  formControlName="emisor"
+                  placeholder="Ej: Maria Pérez"
+                  class="w-full" />
+              </p-iconfield>
+              @if (paymentForm.get('emisor')?.invalid && paymentForm.get('emisor')?.touched) {
+                <small class="text-red-600">El emisor es requerido</small>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="correoEmisor">
+                Correo del Emisor <span class="text-red-500">*</span>
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-envelope"></i>
+                </p-inputicon>
+                <input
+                  id="correoEmisor"
+                  type="email"
+                  pInputText
+                  formControlName="correoEmisor"
+                  placeholder="Ej: maria@example.com"
+                  class="w-full" />
+              </p-iconfield>
+              @if (paymentForm.get('correoEmisor')?.invalid && paymentForm.get('correoEmisor')?.touched) {
+                @if (paymentForm.get('correoEmisor')?.errors?.['required']) {
+                  <small class="text-red-600">El correo es requerido</small>
+                } @else if (paymentForm.get('correoEmisor')?.errors?.['email']) {
+                  <small class="text-red-600">El correo no es válido</small>
+                }
+              }
+            </div>
+          </div>
+
+          <!-- Número de Confirmación (solo si no es Efectivo) -->
+          @if (paymentForm.get('metodoPago')?.value !== 'Efectivo') {
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="confirmation">
+                Nº de Confirmación <span class="text-red-500">*</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">(Últimos 5 dígitos)</span>
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-hashtag"></i>
+                </p-inputicon>
+                <input
+                  id="confirmation"
+                  type="text"
+                  pInputText
+                  formControlName="numeroConfirmacion"
+                  placeholder="XXXXX"
+                  maxlength="5"
+                  class="w-full font-mono tracking-wider" />
+              </p-iconfield>
+              @if (paymentForm.get('numeroConfirmacion')?.invalid && paymentForm.get('numeroConfirmacion')?.touched) {
+                @if (paymentForm.get('numeroConfirmacion')?.errors?.['required']) {
+                  <small class="text-red-600">El número de confirmación es requerido</small>
+                } @else {
+                  <small class="text-red-600">Debe tener exactamente 5 dígitos</small>
+                }
+              }
+            </div>
+          }
+
+          <!-- Fecha de Envío y Proveedor -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="date">
+                Fecha de Envío
+              </label>
+              <p-datePicker
+                id="date"
+                formControlName="fechaEnvio"
+                [showIcon]="true"
+                dateFormat="dd/mm/yy"
+                styleClass="w-full" />
+              @if (paymentForm.get('fechaEnvio')?.invalid && paymentForm.get('fechaEnvio')?.touched) {
+                <small class="text-red-600">La fecha es requerida</small>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="provider">
+                Asignar Pago a Proveedor
+              </label>
+              <app-provider-select
+                id="provider"
+                [providers]="providers()"
+                formControlName="proveedorId"
+                placeholder="Seleccione un proveedor"
+                (selectionChange)="onProviderChange($event)" />
+              @if (paymentForm.get('proveedorId')?.invalid && paymentForm.get('proveedorId')?.touched) {
+                <small class="text-red-600">Debe seleccionar un proveedor</small>
+              }
+            </div>
+          </div>
+
+          <!-- Método de Pago y Moneda -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="paymentMethod">
+                Método de Pago
+              </label>
+              <p-select
+                id="paymentMethod"
+                formControlName="metodoPago"
+                [options]="filteredPaymentMethods()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccione método de pago"
+                styleClass="w-full" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Moneda de Pago
+              </label>
+              <p-selectButton
+                formControlName="pagoEnBolivares"
+                [options]="[
+                  { label: 'USD', value: false },
+                  { label: 'BS', value: true }
+                ]"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="onCurrencyChange($event)"
+                styleClass="w-full" />
+            </div>
+          </div>
+
+          <!-- Selección de Deuda -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="debt">
+              Deuda a Abonar <span class="text-red-500">*</span>
+            </label>
+            <p-select
+              id="debt"
+              formControlName="debtId"
+              [options]="debts()"
+              [optionLabel]="'id'"
+              [optionValue]="'id'"
+              placeholder="Seleccione una deuda"
+              [showClear]="true"
+              styleClass="w-full">
+              <ng-template let-debt pTemplate="item">
+                <div class="flex justify-between items-center">
+                  <span>Deuda #{{ debt.id }}</span>
+                  <span class="text-sm text-gray-500">$ {{ debt.remainingAmount.toFixed(2) }}</span>
+                </div>
+              </ng-template>
+              <ng-template let-debt pTemplate="selectedItem">
+                <div class="flex justify-between items-center w-full">
+                  <span>Deuda #{{ debt.id }}</span>
+                  <span class="text-sm text-gray-500">$ {{ debt.remainingAmount.toFixed(2) }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+            @if (paymentForm.get('debtId')?.invalid && paymentForm.get('debtId')?.touched) {
+              <small class="text-red-600">Debe seleccionar una deuda</small>
+            }
+          </div>
+
+          <!-- Campos condicionales para pago en bolívares -->
+          @if (paymentForm.get('pagoEnBolivares')?.value) {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="tasaDolar">
+                  Tasa del Dólar <span class="text-red-500">*</span>
+                </label>
+                <p-iconfield iconPosition="left" class="w-full">
+                  <p-inputicon>
+                    <span class="text-gray-500 dark:text-gray-400 font-bold">Bs</span>
+                  </p-inputicon>
+                  <p-inputNumber
+                    id="tasaDolar"
+                    formControlName="tasaDolar"
+                    mode="decimal"
+                    [minFractionDigits]="2"
+                    [maxFractionDigits]="2"
+                    placeholder="0.00"
+                    styleClass="w-full" />
+                </p-iconfield>
+                @if (paymentForm.get('tasaDolar')?.invalid && paymentForm.get('tasaDolar')?.touched) {
+                  <small class="text-red-600">La tasa del dólar es requerida y debe ser mayor a 0</small>
+                }
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="montoBolivares">
+                  Monto en Bolívares <span class="text-red-500">*</span>
+                </label>
+                <p-iconfield iconPosition="left" class="w-full">
+                  <p-inputicon>
+                    <span class="text-gray-500 dark:text-gray-400 font-bold">Bs</span>
+                  </p-inputicon>
+                  <p-inputNumber
+                    id="montoBolivares"
+                    formControlName="montoBolivares"
+                    mode="decimal"
+                    [minFractionDigits]="2"
+                    [maxFractionDigits]="2"
+                    placeholder="0.00"
+                    styleClass="w-full" />
+                </p-iconfield>
+                @if (paymentForm.get('montoBolivares')?.invalid && paymentForm.get('montoBolivares')?.touched) {
+                  <small class="text-red-600">El monto en bolívares es requerido y debe ser mayor a 0</small>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Monto en USD -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="amount">
+              Monto en USD
+              @if (getSelectedDebtRemainingAmount() > 0 && !paymentForm.get('pagoEnBolivares')?.value) {
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">
+                  (Máx: ${{ getSelectedDebtRemainingAmount().toFixed(2) }})
+                </span>
+              }
+            </label>
+            <p-iconfield iconPosition="left" class="w-full">
+              <p-inputicon>
+                <span class="text-gray-500 dark:text-gray-400 font-bold">$</span>
+              </p-inputicon>
+              <p-inputNumber
+                id="amount"
+                formControlName="monto"
+                mode="decimal"
+                [minFractionDigits]="2"
+                [maxFractionDigits]="2"
+                placeholder="0.00"
+                currency="USD"
+                [disabled]="paymentForm.get('pagoEnBolivares')?.value"
+                styleClass="w-full" />
+            </p-iconfield>
+            @if (paymentForm.get('monto')?.invalid && paymentForm.get('monto')?.touched) {
+              @if (paymentForm.get('monto')?.errors?.['amountExceedsDebt']) {
+                <small class="text-red-600">
+                  El monto no puede exceder ${{ paymentForm.get('monto')?.errors?.['amountExceedsDebt'].maxAmount.toFixed(2) }}
+                </small>
+              } @else {
+                <small class="text-red-600">El monto es requerido y debe ser mayor a 0</small>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Columna derecha: Adjuntar Comprobante -->
+        <div class="lg:col-span-1">
+          <div class="sticky top-6">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Adjuntar Comprobante
+            </label>
+            <app-file-upload
+              #fileUpload
+              accept="image/*,.pdf"
+              [multiple]="false"
+              [existingImageUrl]="existingReceiptUrl()"
+              (fileSelect)="onFileSelect($event)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="pt-6 flex items-center justify-end space-x-3">
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          (onClick)="onCancel()" 
+          />
+        <p-button
+          type="submit"
+          [label]="isEditMode() ? 'Actualizar Pago' : 'Registrar Pago'"
+          icon="pi pi-save"
+          [loading]="isLoading"
+          [disabled]="paymentForm.invalid" 
+          color="primary"
+          />
+      </div>
+    </form>
+  </app-app-card>
+
+  <p class="mt-6 text-center text-xs text-gray-400 dark:text-gray-600">
+    © 2023 Sistema de Gestión de Pagos. Todos los derechos reservados.
+  </p>
+</app-page-container>
+
+<!-- Modal de Mensajes de API -->
+<app-api-message-dialog
+  [visible]="showMessageDialog()"
+  [messageData]="messageData()"
+  (visibleChange)="showMessageDialog.set($event)"
+  (onClose)="onMessageDialogClose()" />

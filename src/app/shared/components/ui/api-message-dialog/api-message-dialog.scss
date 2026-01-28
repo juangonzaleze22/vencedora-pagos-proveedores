@@ -1,0 +1,26 @@
+// Estilos mejorados para el modal de mensajes
+::ng-deep {
+  .p-dialog.success-dialog {
+    .p-dialog-header {
+      padding: 0;
+      border: none;
+      display: none; // Ocultar header ya que no lo usamos
+    }
+    
+    .p-dialog-content {
+      padding: 0;
+    }
+    
+    .p-dialog-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--p-border-color);
+      background: transparent;
+    }
+
+    // Bordes redondeados más pronunciados
+    .p-dialog-content-wrapper {
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+  }
+}

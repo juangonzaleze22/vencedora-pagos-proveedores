@@ -1,0 +1,95 @@
+<div class="w-full">
+  @if (!selectedFile() && !hasExistingImage()) {
+    <!-- Área de carga inicial -->
+    <div class="flex flex-col items-center justify-center px-6 pt-12 pb-12 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-h-[200px]">
+      <p-fileUpload 
+        #fileUpload
+        mode="basic"
+        [accept]="accept"
+        [maxFileSize]="maxFileSize"
+        [multiple]="multiple"
+        [auto]="false"
+        chooseLabel="Subir Comprobante"
+        chooseIcon="pi pi-upload"
+        emptyLabel=""
+        (onSelect)="onFileSelect($event)"
+        (onError)="onError($event)"
+        styleClass="w-full file-upload-custom" />
+      <p class="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center font-medium">
+        PNG, JPG, PDF hasta 5MB
+      </p>
+    </div>
+  } @else {
+    <!-- Vista previa del archivo seleccionado o imagen existente -->
+    <div class="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+      @if (isImage() && previewUrl()) {
+        <!-- Preview de imagen -->
+        <div class="flex flex-col gap-4">
+          <div class="relative w-full min-h-[320px]">
+            <app-lazy-image
+              [src]="previewUrl()!"
+              [alt]="hasExistingImage() ? 'Comprobante actual del pago' : getFileName()"
+              width="100%"
+              height="320px"
+              objectFit="contain"
+              [rounded]="true"
+              [preview]="true" 
+              />
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              @if (hasExistingImage()) {
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  Comprobante actual
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Haz clic en la imagen para verla en tamaño completo. Puedes reemplazarla seleccionando un nuevo archivo.
+                </p>
+              } @else {
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {{ getFileName() }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {{ getFileSize() }}
+                </p>
+              }
+            </div>
+            <p-button
+              icon="pi pi-times"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              (onClick)="onRemove()"
+              [pTooltip]="hasExistingImage() ? 'Eliminar comprobante actual' : 'Eliminar archivo'"
+              tooltipPosition="top" />
+          </div>
+        </div>
+      } @else {
+        <!-- Preview de PDF u otro archivo -->
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+              <i class="pi pi-file-pdf text-2xl text-red-600 dark:text-red-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                {{ getFileName() }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ getFileSize() }}
+              </p>
+            </div>
+          </div>
+          <p-button
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            (onClick)="onRemove()"
+            [pTooltip]="'Eliminar archivo'"
+            tooltipPosition="top" />
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,116 @@
+<div class="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 bg-background-light dark:bg-background-dark font-login text-slate-900 dark:text-white transition-colors duration-300">
+  <p-toast />
+  
+  <!-- Main Card Container -->
+  <div class="w-full max-w-[440px] bg-white dark:bg-card-dark rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-800 transition-colors duration-300">
+    <!-- Decoration / Brand Header -->
+    <div class="h-2 w-full bg-primary"></div>
+    
+    <div class="p-8 sm:p-10 flex flex-col gap-8">
+      <!-- Header Section -->
+      <div class="flex flex-col items-center text-center gap-4">
+        <!-- Logo Placeholder -->
+        <div class="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2">
+          <i class="pi pi-wallet text-4xl"></i>
+        </div>
+        <div class="flex flex-col gap-1">
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Gestión de Pagos
+          </h1>
+          <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            Bienvenido al portal corporativo
+          </p>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+        <!-- Email/User Field -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="email">
+            Usuario
+          </label>
+          <p-iconfield iconPosition="left" class="w-full">
+            <p-inputicon>
+              <i class="pi pi-envelope"></i>
+            </p-inputicon>
+            <input
+              id="email"
+              type="email"
+              pInputText
+              formControlName="email"
+              placeholder="nombre@empresa.com"
+              class="w-full"
+              [class.ng-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            />
+          </p-iconfield>
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <small class="text-red-600 dark:text-red-400">
+              @if (loginForm.get('email')?.errors?.['required']) {
+                El correo es requerido
+              } @else if (loginForm.get('email')?.errors?.['email']) {
+                Ingresa un correo válido
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Password Field -->
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="password">
+            Contraseña
+          </label>
+          <p-password
+            id="password"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            placeholder="••••••••"
+            styleClass="w-full"
+            [inputStyleClass]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'ng-invalid' : ''"
+          />
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <small class="text-red-600 dark:text-red-400">
+              @if (loginForm.get('password')?.errors?.['required']) {
+                La contraseña es requerida
+              } @else if (loginForm.get('password')?.errors?.['minlength']) {
+                La contraseña debe tener al menos 6 caracteres
+              }
+            </small>
+          }
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-2">
+          <p-button
+            type="submit"
+            label="Iniciar Sesión"
+            icon="pi pi-sign-in"
+            [loading]="isLoading()"
+            [disabled]="loginForm.invalid || isLoading()"
+            styleClass="w-full"
+          />
+        </div>
+
+        <!-- Footer Links -->
+        <div class="flex flex-col items-center gap-4 mt-2">
+          <a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors underline decoration-slate-300 dark:decoration-slate-600 underline-offset-4" href="#">
+            ¿Olvidó su contraseña?
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Page Footer -->
+  <div class="mt-8 text-center">
+    <p class="text-xs text-slate-400 dark:text-slate-600 font-medium">
+      © 2024 Corporate Payment Systems. All rights reserved.
+    </p>
+    <div class="flex justify-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-600">
+      <a class="hover:text-slate-600 dark:hover:text-slate-400" href="#">Privacy Policy</a>
+      <span>•</span>
+      <a class="hover:text-slate-600 dark:hover:text-slate-400" href="#">Terms of Service</a>
+    </div>
+  </div>
+</div>

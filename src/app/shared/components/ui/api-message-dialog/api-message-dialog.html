@@ -1,0 +1,96 @@
+<p-dialog
+  [header]="''"
+  [(visible)]="_visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  [closeOnEscape]="!isSuccess()"
+  [style]="{ width: '90vw', maxWidth: '480px' }"
+  [closable]="!isSuccess()"
+  [styleClass]="'success-dialog'"
+  (onHide)="onDialogClose()"
+  (visibleChange)="visibleChange.emit($event)">
+  
+  <div class="flex flex-col items-center text-center py-6 px-4">
+    @if (isSuccess()) {
+      <!-- Diseño de éxito moderno -->
+      <div class="flex flex-col items-center gap-4 w-full">
+        <!-- Icono de éxito grande -->
+        <div class="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
+          <i class="pi pi-check-circle text-5xl text-green-600 dark:text-green-400"></i>
+        </div>
+        
+        <!-- Título de éxito -->
+        <div class="space-y-2">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            ¡Éxito!
+          </h2>
+          <p class="text-base text-gray-600 dark:text-gray-300 leading-relaxed max-w-sm">
+            {{ _messageData()?.message || 'Operación completada correctamente' }}
+          </p>
+        </div>
+        
+        <!-- Línea decorativa verde -->
+        <div class="w-16 h-1 bg-green-500 dark:bg-green-400 rounded-full mt-2"></div>
+      </div>
+    } @else {
+      <!-- Diseño de error -->
+      <div class="flex flex-col items-center gap-4 w-full">
+        <!-- Icono de error grande -->
+        <div class="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-2">
+          <i class="pi pi-exclamation-triangle text-5xl text-red-600 dark:text-red-400"></i>
+        </div>
+        
+        <!-- Título de error -->
+        <div class="space-y-2">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Error
+          </h2>
+          <p class="text-base text-gray-600 dark:text-gray-300 leading-relaxed max-w-sm">
+            {{ _messageData()?.message || 'Ha ocurrido un error' }}
+          </p>
+        </div>
+
+        <!-- Errores de validación detallados -->
+        @if (_messageData()?.errors && _messageData()!.errors!.length > 0) {
+          <div class="w-full mt-4 border-t-2 border-gray-200 dark:border-gray-700 pt-4">
+            <div class="flex items-center justify-center gap-2 mb-3">
+              <i class="pi pi-info-circle text-red-500 dark:text-red-400"></i>
+              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                Errores de validación:
+              </p>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2.5 text-left">
+              @for (error of _messageData()!.errors; track $index) {
+                <div class="flex items-start gap-2.5 text-sm">
+                  <i class="pi pi-times-circle text-red-500 dark:text-red-400 text-xs mt-0.5 flex-shrink-0"></i>
+                  <span class="flex-1 text-gray-700 dark:text-gray-300">
+                    @if (error.path) {
+                      <span class="font-semibold text-gray-800 dark:text-gray-200">{{ error.path }}:</span>
+                      <span class="ml-1">{{ error.msg }}</span>
+                    } @else {
+                      {{ error.msg }}
+                    }
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-center gap-3 pb-2">
+      <p-button
+        [label]="isSuccess() ? 'Continuar' : 'Cerrar'"
+        [severity]="isSuccess() ? 'success' : 'secondary'"
+        [icon]="isSuccess() ? 'pi pi-check' : 'pi pi-times'"
+        (onClick)="onConfirm()"
+        styleClass="min-w-[140px]" />
+    </div>
+  </ng-template>
+</p-dialog>
+

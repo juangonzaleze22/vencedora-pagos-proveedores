@@ -1,0 +1,9 @@
+<div 
+  class="flex-1 overflow-y-auto"
+  [class]="padding ? 'p-4 md:p-8' : ''">
+  <div 
+    class="w-full mx-auto"
+    [ngClass]="{maxWidth}">
+    <ng-content />
+  </div>
+</div>

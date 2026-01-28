@@ -1,0 +1,657 @@
+<app-app-header 
+  title="Reporte de Pagos Detallados"
+  subtitle="Consulte el historial de deudas, filtre por periodo y revise pagos realizados a proveedores" />
+
+<p-toast />
+
+<app-page-container>
+  <div class="mb-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+    <p-button 
+      icon="pi pi-arrow-left"
+      label="Volver al Dashboard"
+      [text]="true"
+      (onClick)="onCancel()" />
+  </div>
+
+  <div class="space-y-8">
+        <!-- Filtros -->
+        <app-app-card>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="provider-select">
+                Seleccione el Proveedor
+              </label>
+              <app-provider-select
+                id="provider-select"
+                [providers]="providersList"
+                placeholder="Seleccione un proveedor..."
+                (selectionChange)="onProviderChange($event)" />
+            </div>
+            
+            <div class="flex justify-end items-end mb-2">
+              <app-date-range-picker
+                [value]="dateRange()"
+                [selectedPeriod]="selectedPeriod()"
+                (valueChange)="onDateRangeChange($event)"
+                (quickSelect)="onPeriodSelect($event)" />
+            </div>
+          </div>
+        </app-app-card>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Resumen del Proveedor -->
+          @if (selectedProvider) {
+            <div class="lg:col-span-1">
+              <app-app-card class="card-no-padding" styleClass="sticky top-6">
+                <div class="px-4 py-5 sm:px-6 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-lg rounded-b-none">
+                  <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center">
+                    <i class="pi pi-info-circle mr-2 text-primary"></i>
+                    Resumen del Proveedor
+                  </h3>
+                </div>
+                <div class="p-4">
+                  <dl class="space-y-4">
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre Proveedor</dt>
+                      <dd class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+                        {{ selectedProvider!.companyName }}
+                      </dd>
+                    </div>
+                    @if (selectedProvider!.taxId) {
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">RIF / ID Fiscal</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-gray-300">
+                          {{ selectedProvider!.taxId }}
+                        </dd>
+                      </div>
+                    }
+
+                    <div [ngClass]="{
+                      'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/30': totalDebt() > 0,
+                      'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800/30': totalDebt() <= 0
+                    }" class="p-4 rounded-lg border mt-4">
+                      <label [ngClass]="totalDebt() > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'" 
+                        class="block text-xs font-medium uppercase tracking-wider mb-1">
+                        Monto Adeudado Total
+                      </label>
+                      <div [ngClass]="totalDebt() > 0 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'" 
+                        class="text-3xl font-bold font-mono">
+                        $ {{ totalDebt().toFixed(2) }}
+                      </div>
+                      @if (totalDebt() > 0) {
+                        <p class="text-xs text-red-500 mt-1">Requiere atención</p>
+                      } @else {
+                        <p class="text-xs text-green-500 mt-1">Al día / Sin deudas</p>
+                      }
+                    </div>
+                  </dl>
+                  
+                  <!-- Lista de Deudas con Radio Buttons -->
+                  @if (debts().length > 0) {
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                        <i class="pi pi-list mr-2 text-primary"></i>
+                        Seleccionar Deuda
+                      </h4>
+                      <div class="space-y-6">
+                        @for (debt of debts(); track debt.id) {
+                          <div 
+                            class="relative p-5 rounded-xl border-2 transition-all hover:shadow-md cursor-pointer"
+                            [class.border-primary]="selectedDebtId() === debt.id"
+                            [class.bg-primary-50]="selectedDebtId() === debt.id"
+                            [class.dark:bg-primary-900-20]="selectedDebtId() === debt.id"
+                            [class.shadow-sm]="selectedDebtId() === debt.id"
+                            [class.border-primary-20]="selectedDebtId() !== debt.id"
+                            [class.bg-white]="selectedDebtId() !== debt.id"
+                            [class.dark:bg-slate-800-50]="selectedDebtId() !== debt.id"
+                            (click)="onDebtSelect(debt.id)">
+                            <!-- Radio button oculto pero funcional -->
+                            <input
+                              type="radio"
+                              [id]="'debt-' + debt.id"
+                              [name]="'debt-radio'"
+                              [value]="debt.id"
+                              [checked]="selectedDebtId() === debt.id"
+                              (change)="onDebtSelect(debt.id)"
+                              class="sr-only" />
+                            <!-- Header de la deuda -->
+                            <div class="flex items-start justify-between mb-4">
+                              <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center">
+                                  <i class="pi pi-file text-primary text-xl"></i>
+                                </div>
+                                <div>
+                                  <h4 class="font-bold text-slate-900 dark:text-white">Deuda #{{debt.id }}</h4>
+                                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold uppercase mt-1"
+                                    [ngClass]="{
+                                      'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300': debt.status === 'PENDING',
+                                      'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300': debt.status === 'PARTIALLY_PAID',
+                                      'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300': debt.status === 'PAID',
+                                      'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300': debt.status === 'OVERDUE'
+                                    }">
+                                    {{ getStatusLabel(debt.status) }}
+                                  </span>
+                                </div>
+                              </div>
+                              <button 
+                                class="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                                (click)="$event.stopPropagation()">
+                                <i class="pi pi-credit-card"></i>
+                              </button>
+                            </div>
+
+                            <!-- Información de la deuda -->
+                            <div class="grid grid-cols-2 gap-y-4">
+                              <!-- Monto Inicial -->
+                              <div class="flex gap-3">
+                                <i class="pi pi-dollar text-slate-300 dark:text-slate-500 mt-1"></i>
+                                <div>
+                                  <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Inicial</p>
+                                  <p class="text-lg font-semibold text-slate-700 dark:text-slate-300">$ {{ debt.initialAmount.toFixed(2) }}</p>
+                                </div>
+                              </div>
+
+                              <!-- Monto Restante -->
+                              <div class="flex gap-3">
+                                <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+                                <div>
+                                  <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Restante</p>
+                                  <p class="text-lg font-black text-red-600 dark:text-red-400">$ {{ debt.remainingAmount.toFixed(2) }}</p>
+                                </div>
+                              </div>
+
+                              <!-- Fecha de Vencimiento con Semáforo -->
+                              <div class="flex gap-3">
+                                <i class="pi pi-calendar text-slate-300 dark:text-slate-500 mt-1"></i>
+                                <div>
+                                  <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Vencimiento</p>
+                                  <p class="text-sm font-bold flex items-center gap-1" 
+                                    [ngClass]="{
+                                      'text-red-600 dark:text-red-400': getDueDateStatus(debt) === 'danger',
+                                      'text-yellow-600 dark:text-yellow-400': getDueDateStatus(debt) === 'warning',
+                                      'text-green-600 dark:text-green-400': getDueDateStatus(debt) === 'safe',
+                                      'text-slate-700 dark:text-slate-300': getDueDateStatus(debt) !== 'danger' && getDueDateStatus(debt) !== 'warning' && getDueDateStatus(debt) !== 'safe'
+                                    }">
+                                    {{ debt.dueDate | date:'dd/MM/yyyy' }}
+                                    @if (getDueDateStatus(debt) === 'danger') {
+                                      <i class="pi pi-exclamation-triangle text-xs"></i>
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+
+                              <!-- Pagos Activos -->
+                              <div class="flex gap-3">
+                                <i class="pi pi-check-circle text-slate-300 dark:text-slate-500 mt-1"></i>
+                                <div>
+                                  <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Pagos Activos</p>
+                                  <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ getActivePaymentsCount(debt) }}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Botón Ver Detalles -->
+                            @if (debt.orderId) {
+                            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                              <a 
+                                class="text-xs font-semibold text-primary hover:text-blue-700 dark:text-blue-400 flex items-center gap-1 group cursor-pointer">
+                                Ver Detalles de Pagos
+                                <i class="pi pi-arrow-right text-xs group-hover:translate-x-0.5 transition-transform"></i>
+                              </a>
+                            </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  
+                  <div class="mt-4">
+                    <p-button
+                      label="Exportar Reporte"
+                      icon="pi pi-download"
+                      severity="success"
+                      styleClass="w-full"
+                      (onClick)="onExport()" />
+                  </div>
+                </div>
+              </app-app-card>
+            </div>
+          }
+
+          <!-- Estadísticas y Tabla -->
+          <div [ngClass]="selectedProvider ? 'lg:col-span-2' : 'lg:col-span-3'">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Estadísticas del Periodo</h3>
+            @if (selectedDebtId() && paymentsStatistics(); as stats) {
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mr-4">
+                    <i class="pi pi-dollar"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Pagado</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ {{ stats.totalPaid.toFixed(2) }}</p>
+                  </div>
+                </div>
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mr-4">
+                    <i class="pi pi-list"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad de Pagos</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.paymentCount }}</p>
+                  </div>
+                </div>
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 mr-4">
+                    <i class="pi pi-chart-line"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio de Pago</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ {{ stats.averagePayment.toFixed(2) }}</p>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mr-4">
+                    <i class="pi pi-dollar"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Pagado</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ 0.00</p>
+                  </div>
+                </div>
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mr-4">
+                    <i class="pi pi-list"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad de Pagos</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">0</p>
+                  </div>
+                </div>
+                <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
+                  <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 mr-4">
+                    <i class="pi pi-chart-line"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio de Pago</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ 0.00</p>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Tabla de Pagos -->
+            <app-app-card>
+              <div class="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                  @if (selectedDebtId()) {
+                    Pagos de la Deuda #{{ selectedDebt()?.id }}
+                  } @else {
+                    Seleccione una deuda para ver sus pagos
+                  }
+                </h3>
+                <div class="flex items-center gap-3">
+                  @if (selectedDebtId()) {
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">Filtro:</span>
+                      <p-button
+                        label="Activos"
+                        [outlined]="paymentFilter() !== 'active'"
+                        [severity]="paymentFilter() === 'active' ? 'success' : 'secondary'"
+                        [text]="paymentFilter() !== 'active'"
+                        size="small"
+                        icon="pi pi-check-circle"
+                        (onClick)="onPaymentFilterChange('active')"
+                        [pTooltip]="'Mostrar solo pagos activos'"
+                        tooltipPosition="bottom" />
+                      @if (deletedPayments().length > 0) {
+                        <p-button
+                          [label]="'Eliminados (' + deletedPayments().length + ')'"
+                          [outlined]="paymentFilter() !== 'deleted'"
+                          [severity]="paymentFilter() === 'deleted' ? 'danger' : 'secondary'"
+                          [text]="paymentFilter() !== 'deleted'"
+                          size="small"
+                          icon="pi pi-trash"
+                          (onClick)="onPaymentFilterChange('deleted')"
+                          [pTooltip]="'Mostrar solo pagos eliminados'"
+                          tooltipPosition="bottom" />
+                      }
+                    </div>
+                  }
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    {{ displayedPayments().length }} @if (paymentFilter() === 'active') {
+                      <span class="ml-1 text-gray-600 dark:text-gray-400">activos</span>
+                    } @else if (paymentFilter() === 'deleted') {
+                      <span class="ml-1 text-gray-600 dark:text-gray-400">eliminados</span>
+                    }
+                  </span>
+                </div>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <p-table [value]="displayedPayments()" [loading]="loadingPayments()" styleClass="p-datatable-striped p-datatable-sm">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th class="text-xs font-semibold align-middle">Contacto</th>
+                      <th class="text-xs font-semibold align-middle">Fecha</th>
+                      <th class="text-xs font-semibold align-middle">Método</th>
+                      <th class="text-xs font-semibold align-middle">Monto</th>
+                      <th class="text-xs font-semibold text-center align-middle">Comprobante</th>
+                      <th class="text-xs font-semibold text-center align-middle">Acciones</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-payment>
+                    <tr 
+                      [ngClass]="{
+                        'opacity-70': payment.deleted,
+                        'bg-red-50/30 dark:bg-red-900/20 border-l-4 border-red-500': payment.deleted
+                      }">
+                      <td class="py-2 align-middle">
+                        <div class="flex flex-col gap-0.5">
+                          <div class="flex items-center gap-2">
+                            @if (payment.deleted) {
+                              <span class="text-xs font-medium text-gray-500 line-through">#{{ payment.id }}</span>
+                            } @else {
+                              <span 
+                                class="text-xs font-medium cursor-pointer hover:underline"
+                                [ngClass]="'text-primary'"
+                                (click)="onViewPaymentDetail(payment)">
+                                #{{ payment.id }}
+                              </span>
+                            }
+                            @if (payment.senderName) {
+                              <span 
+                                class="text-sm font-medium"
+                                [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                                {{ payment.senderName }}
+                              </span>
+                            }
+                          </div>
+                          @if (payment.senderEmail) {
+                            <a 
+                              [href]="'mailto:' + payment.senderEmail"
+                              class="text-xs text-primary hover:text-primary/80 hover:underline transition-colors"
+                              [ngClass]="{'line-through text-gray-500': payment.deleted}"
+                              (click)="$event.stopPropagation()">
+                              {{ payment.senderEmail }}
+                            </a>
+                          } @else if (payment.senderName) {
+                            <span class="text-xs text-gray-400 dark:text-gray-500">
+                              Sin correo
+                            </span>
+                          }
+                        </div>
+                      </td>
+                      <td class="text-sm py-2 align-middle" [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                        {{ payment.paymentDate | date:'dd/MM/yyyy' }}
+                      </td>
+                      <td class="py-2 align-middle">
+                        <div class="flex flex-col gap-0.5">
+                          <span 
+                            class="px-1.5 py-0.5 rounded text-xs font-medium inline-block w-fit"
+                            [ngClass]="{
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': payment.paymentMethod === 'Zelle' && !payment.deleted,
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': payment.paymentMethod === 'Transferencia' && !payment.deleted,
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': payment.paymentMethod === 'Efectivo' && !payment.deleted,
+                              'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 line-through': payment.deleted
+                            }">
+                            {{ payment.paymentMethod }}
+                          </span>
+                          @if (payment.isBolivares && payment.exchangeRate) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                              Tasa: Bs {{ payment.exchangeRate | number:'1.2-2' }}
+                            </span>
+                          }
+                        </div>
+                      </td>
+                      <td class="py-2 align-middle">
+                        <div class="flex flex-col gap-0.5">
+                          <span 
+                            class="text-sm font-semibold"
+                            [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                            $ {{ payment.amount.toFixed(2) }}
+                          </span>
+                          @if (payment.isBolivares && payment.amountInBolivares) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                              Bs {{ payment.amountInBolivares | number:'1.2-2' }}
+                            </span>
+                          }
+                        </div>
+                      </td>
+                      <td class="text-center py-2 align-middle">
+                        <div class="flex items-center justify-center">
+                          @if (payment.deleted) {
+                            <div class="opacity-50">
+                              <app-lazy-image
+                                [src]="payment.receiptFile"
+                                [alt]="'Comprobante de pago #' + payment.id"
+                                width="48px"
+                                height="48px"
+                                objectFit="cover"
+                                [rounded]="true"
+                                [preview]="true" />
+                            </div>
+                          } @else {
+                            <app-lazy-image
+                              [src]="payment.receiptFile"
+                              [alt]="'Comprobante de pago #' + payment.id"
+                              width="48px"
+                              height="48px"
+                              objectFit="cover"
+                              [rounded]="true"
+                              [preview]="true" />
+                          }
+                        </div>
+                      </td>
+                      <td class="py-2 align-middle text-center">
+                        <div class="flex items-center justify-center">
+                          <p-button
+                            icon="pi pi-ellipsis-v"
+                            [text]="true"
+                            severity="secondary"
+                            [rounded]="true"
+                            size="small"
+                            (onClick)="paymentMenu.toggle($event)"
+                            [pTooltip]="'Acciones'"
+                            tooltipPosition="top" />
+                          <p-menu 
+                            #paymentMenu
+                            [model]="getPaymentMenuItems(payment)" 
+                            [popup]="true"
+                            [appendTo]="'body'" />
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+                  @if (displayedPayments().length === 0) {
+                    <ng-template pTemplate="emptymessage">
+                      <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-500">
+                          @if (selectedDebtId()) {
+                            No hay pagos registrados para esta deuda
+                          } @else {
+                            Seleccione una deuda para ver sus pagos
+                          }
+                        </td>
+                      </tr>
+                    </ng-template>
+                  }
+                </p-table>
+                
+                <!-- Paginación para pagos de deuda -->
+                @if (selectedDebtId() && paymentsPagination().totalPages > 1) {
+                  <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <p-paginator
+                      [rows]="paymentsPageSize()"
+                      [totalRecords]="paymentsTotalRecords()"
+                      [first]="(paymentsPage() - 1) * paymentsPageSize()"
+                      (onPageChange)="onPageChange($event)"
+                      [rowsPerPageOptions]="[10, 20, 50]" />
+                  </div>
+                }
+              </div>
+            </app-app-card>
+          </div>
+        </div>
+  </div>
+</app-page-container>
+
+<!-- Modal de confirmación para eliminar pago -->
+<app-confirm-dialog
+  [(visible)]="showConfirmDialog"
+  title="Eliminar Pago"
+  [message]="'¿Está seguro de que desea eliminar el pago #' + (paymentToDelete()?.id || '') + '? Esta acción no se puede deshacer.'"
+  confirmLabel="Eliminar"
+  cancelLabel="Cancelar"
+  severity="danger"
+  icon="pi pi-trash"
+  [showReasonInput]="true"
+  (onConfirm)="onConfirmDelete($event)"
+  (onCancel)="onCancelDelete()" />
+
+<!-- Modal de pagos eliminados -->
+<p-dialog
+  header="Pagos Eliminados"
+  [(visible)]="showDeletedPaymentsDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '900px' }"
+  [closable]="true"
+  (onHide)="onCloseDeletedPaymentsDialog()">
+  
+  <div class="mb-4">
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+      Se muestran {{ deletedPayments().length }} pago(s) eliminado(s) de la deuda #{{ selectedDebt()?.debtNumber || selectedDebt()?.id }}
+    </p>
+  </div>
+
+  <div class="overflow-x-auto">
+    <p-table [value]="deletedPayments()" styleClass="p-datatable-striped p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="text-xs font-semibold">Contacto</th>
+          <th class="text-xs font-semibold">Fecha</th>
+          <th class="text-xs font-semibold">Método</th>
+          <th class="text-xs font-semibold">Monto</th>
+          <th class="text-xs font-semibold">Fecha Eliminación</th>
+          <th class="text-xs font-semibold">Motivo</th>
+          <th class="text-xs font-semibold text-center">Comprobante</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-payment>
+        <tr class="opacity-70 bg-red-50/30 dark:bg-red-900/20 border-l-4 border-red-500">
+          <td class="py-2">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-gray-500 line-through">#{{ payment.id }}</span>
+                @if (payment.senderName) {
+                  <span class="text-sm font-medium line-through text-gray-500">
+                    {{ payment.senderName }}
+                  </span>
+                }
+              </div>
+              @if (payment.senderEmail) {
+                <a 
+                  [href]="'mailto:' + payment.senderEmail"
+                  class="text-xs text-primary hover:text-primary/80 hover:underline transition-colors line-through"
+                  (click)="$event.stopPropagation()">
+                  {{ payment.senderEmail }}
+                </a>
+              } @else if (payment.senderName) {
+                <span class="text-xs text-gray-400 dark:text-gray-500 line-through">
+                  Sin correo
+                </span>
+              }
+            </div>
+          </td>
+          <td class="text-sm line-through text-gray-500 py-2">
+            {{ payment.paymentDate | date:'dd/MM/yyyy' }}
+          </td>
+          <td class="py-2">
+            <div class="flex flex-col gap-0.5">
+              <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 line-through inline-block w-fit">
+                {{ payment.paymentMethod }}
+              </span>
+              @if (payment.isBolivares && payment.exchangeRate) {
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 line-through leading-tight">
+                  Tasa: Bs {{ payment.exchangeRate | number:'1.2-2' }}
+                </span>
+              }
+            </div>
+          </td>
+          <td class="py-2">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-semibold line-through text-gray-500">
+                $ {{ payment.amount.toFixed(2) }}
+              </span>
+              @if (payment.isBolivares && payment.amountInBolivares) {
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 line-through leading-tight">
+                  Bs {{ payment.amountInBolivares | number:'1.2-2' }}
+                </span>
+              }
+            </div>
+          </td>
+          <td class="text-xs text-gray-600 dark:text-gray-400 py-2">
+            @if (payment.deletedAt) {
+              {{ payment.deletedAt | date:'dd/MM/yyyy HH:mm' }}
+            } @else {
+              <span class="text-gray-400">-</span>
+            }
+          </td>
+          <td class="text-xs text-gray-600 dark:text-gray-400 max-w-xs py-2">
+            @if (payment.deleteReason) {
+              <span [pTooltip]="payment.deleteReason" tooltipPosition="top" class="cursor-help">
+                {{ payment.deleteReason.length > 40 ? (payment.deleteReason.substring(0, 40) + '...') : payment.deleteReason }}
+              </span>
+            } @else {
+              <span class="text-gray-400 italic">Sin motivo</span>
+            }
+          </td>
+          <td class="text-center py-2">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto opacity-50">
+              <app-lazy-image
+                [src]="payment.receiptFile"
+                [alt]="'Comprobante de pago #' + payment.id"
+                width="48px"
+                height="48px"
+                objectFit="cover"
+                [rounded]="true"
+                [preview]="true" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      @if (deletedPayments().length === 0) {
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center py-8 text-gray-500">
+              No hay pagos eliminados para esta deuda
+            </td>
+          </tr>
+        </ng-template>
+      }
+    </p-table>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-3">
+      <p-button
+        label="Cerrar"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="onCloseDeletedPaymentsDialog()"
+        styleClass="min-w-[120px]" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de detalle de orden -->
+<app-order-detail-dialog
+  [(visible)]="showOrderDetailDialog"
+  [orderId]="selectedOrderId()"
+  (onClose)="onOrderDetailClose()" />

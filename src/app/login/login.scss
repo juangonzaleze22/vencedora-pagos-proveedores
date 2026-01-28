@@ -1,0 +1,25 @@
+// Estilos específicos para el componente de login
+:host {
+  display: block;
+  width: 100%;
+}
+
+// Ajustes para los inputs de PrimeNG
+::ng-deep {
+  .p-inputtext {
+    width: 100%;
+  }
+
+  .p-password {
+    width: 100%;
+    
+    .p-password-input {
+      width: 100%;
+    }
+  }
+
+  .p-button {
+    width: 100%;
+  }
+}
+

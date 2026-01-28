@@ -1,0 +1,35 @@
+<div class="flex flex-col gap-4">
+  <div class="flex gap-2">
+    <!-- <p-datePicker 
+      [(ngModel)]="dateRange"
+      selectionMode="range"
+      [showIcon]="true"
+      dateFormat="dd/mm/yy"
+      placeholder="Seleccionar rango de fechas"
+      [showButtonBar]="true"
+      styleClass="w-full"
+      (onSelect)="onDateSelect($event)" />
+  </div> -->
+  <div class="flex gap-2 flex-wrap">
+    <p-button 
+      label="Hoy"
+      [text]="selectedPeriod !== 'today'"
+      size="small"
+      (onClick)="onQuickSelect('today')" />
+    <p-button 
+      label="Hace 7 días"
+      [text]="selectedPeriod !== 'week'"
+      size="small"
+      (onClick)="onQuickSelect('week')" />
+    <p-button 
+      label="Este Mes"
+      [text]="selectedPeriod !== 'month'"
+      size="small"
+      (onClick)="onQuickSelect('month')" />
+    <p-button 
+      label="Todos"
+      [text]="selectedPeriod !== 'all'"
+      size="small"
+      (onClick)="onQuickSelect('all')" />
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<p-dialog
+  [header]="finalTitle()"
+  [(visible)]="_visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  [closeOnEscape]="true"
+  [style]="{ width: '90vw', maxWidth: '500px' }"
+  [closable]="true"
+  [styleClass]="'confirm-dialog'"
+  (onHide)="onDialogClose()"
+  (visibleChange)="visibleChange.emit($event)">
+  
+  <div class="flex flex-col py-4 px-4">
+    <!-- Icono -->
+    <div 
+      class="w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto"
+      [ngClass]="getIconBgClass()">
+      <i 
+        [class]="finalIcon() + ' text-3xl'"
+        [ngClass]="getIconClass()"></i>
+    </div>
+    
+    <!-- Mensaje -->
+    <div class="space-y-2 w-full mb-4 text-center">
+      <p class="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+        {{ finalMessage() }}
+      </p>
+    </div>
+
+    <!-- Campo de motivo (opcional) -->
+    @if (_showReasonInput()) {
+      <div class="w-full mt-4">
+        <label 
+          for="delete-reason" 
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Motivo de eliminación (opcional)
+        </label>
+        <textarea
+          id="delete-reason"
+          pTextarea
+          [value]="_reason()"
+          (input)="onReasonChange($any($event.target).value)"
+          placeholder="Ingrese el motivo de eliminación..."
+          [rows]="3"
+          [autoResize]="true"
+          class="w-full"
+          styleClass="w-full"
+          autocomplete="off"></textarea>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-3">
+      <p-button
+        [label]="finalCancelLabel()"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="handleCancel()"
+        styleClass="min-w-[120px]" />
+      <p-button
+        [label]="finalConfirmLabel()"
+        [severity]="getConfirmButtonSeverity()"
+        [icon]="finalSeverity() === 'danger' ? 'pi pi-trash' : 'pi pi-check'"
+        (onClick)="handleConfirm()"
+        styleClass="min-w-[120px]" />
+    </div>
+  </ng-template>
+</p-dialog>
+

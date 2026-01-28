@@ -1,0 +1,38 @@
+:host ::ng-deep .card-no-padding .p-card-body{ 
+    padding: 0 !important;
+}
+
+:host ::ng-deep .card-no-padding .p-card-header{ 
+    border-radius: 12px 12px 0 0 !important;
+}
+
+// Estilos para el menú de acciones
+:host ::ng-deep .p-menu {
+    min-width: 200px;
+    
+    .p-menuitem-link {
+        padding: 0.75rem 1rem;
+        
+        &:hover {
+            background-color: var(--p-surface-hover);
+        }
+    }
+    
+    .p-menuitem-text {
+        font-weight: 500;
+    }
+    
+    .p-menuitem-icon {
+        margin-right: 0.75rem;
+    }
+    
+    // Estilo para el separador
+    .p-menu-separator {
+        margin: 0.5rem 0;
+    }
+    
+    // Estilo para elementos deshabilitados
+    .p-menuitem.p-disabled {
+        opacity: 0.6;
+    }
+}

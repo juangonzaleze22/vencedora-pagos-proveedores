@@ -1,0 +1,177 @@
+<p-toast />
+
+<p-dialog
+  [header]="orderTitle()"
+  [(visible)]="_visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '1200px' }"
+  [closable]="true"
+  [styleClass]="'order-detail-dialog'"
+  (onHide)="onDialogClose()"
+  (visibleChange)="visibleChange.emit($event)">
+  
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+    </div>
+  } @else if (order(); as orderData) {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Side: Order Details -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <!-- Información de la Transacción -->
+        <app-app-card>
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Información de la Orden</h3>
+          </div>
+          <div class="p-6 space-y-0">
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">ID de Orden</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">#{{ orderData.id }}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Proveedor</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">
+                {{ orderData.supplier?.companyName || 'N/A' }}
+              </p>
+            </div>
+            
+            @if (orderData.supplier?.taxId) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">RIF / ID Fiscal</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">{{ orderData.supplier?.taxId }}</p>
+              </div>
+            }
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Fecha de Despacho</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">
+                {{ orderData.dispatchDate | date:'dd/MM/yyyy' }}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Días de Crédito</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">{{ orderData.creditDays }} días</p>
+            </div>
+            
+            <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+              <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Fecha de Vencimiento</p>
+              <p class="text-gray-900 dark:text-white text-sm font-bold">
+                {{ orderData.dueDate | date:'dd/MM/yyyy' }}
+              </p>
+            </div>
+            
+            @if (orderData.debt) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Estado de Deuda</p>
+                <span 
+                  class="px-2.5 py-1 rounded-md text-xs font-semibold w-fit"
+                  [ngClass]="getStatusBadgeClass(orderData.debt.status)">
+                  {{ getStatusLabel(orderData.debt.status) }}
+                </span>
+              </div>
+              
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Monto Restante</p>
+                <p class="text-red-600 dark:text-red-400 text-sm font-bold">
+                  $ {{ orderData.debt.remainingAmount.toFixed(2) }}
+                </p>
+              </div>
+            }
+            
+            <div class="grid grid-cols-2 py-5 bg-primary/5 dark:bg-primary/10 -mx-6 px-6 mt-2">
+              <p class="text-primary text-sm font-bold">Monto Total</p>
+              <p class="text-primary text-xl font-black leading-none">$ {{ orderData.amount.toFixed(2) }}</p>
+            </div>
+          </div>
+        </app-app-card>
+        
+        <!-- Actions Area -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col gap-3">
+          <p-button
+            label="Imprimir Reporte"
+            icon="pi pi-print"
+            severity="info"
+            styleClass="w-full"
+            (onClick)="onPrint()" />
+          <p-button
+            label="Compartir Detalle"
+            icon="pi pi-share-alt"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="w-full"
+            (onClick)="onShare()" />
+        </div>
+      </div>
+      
+      <!-- Right Side: Additional Info -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <app-app-card>
+          <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Información Adicional</h3>
+          </div>
+          <div class="p-6 space-y-4">
+            @if (orderData.createdAt) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Fecha de Creación</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">
+                  {{ orderData.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+            }
+            
+            @if (orderData.updatedAt) {
+              <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Última Actualización</p>
+                <p class="text-gray-900 dark:text-white text-sm font-bold">
+                  {{ orderData.updatedAt | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+            }
+            
+            @if (orderData.debt) {
+              <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Resumen de Deuda</h4>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Monto Inicial:</span>
+                    <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                      $ {{ orderData.amount.toFixed(2) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Monto Restante:</span>
+                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">
+                      $ {{ orderData.debt.remainingAmount.toFixed(2) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-semibold text-gray-900 dark:text-white">Pagado:</span>
+                    <span class="text-sm font-bold text-green-600 dark:text-green-400">
+                      $ {{ (orderData.amount - orderData.debt.remainingAmount).toFixed(2) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </app-app-card>
+      </div>
+    </div>
+  }
+  
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-3">
+      <p-button
+        label="Cerrar"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="onDialogClose()"
+        styleClass="min-w-[120px]" />
+    </div>
+  </ng-template>
+</p-dialog>
+

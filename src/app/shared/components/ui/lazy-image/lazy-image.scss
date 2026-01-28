@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+// Asegurar que PrimeNG Image sea clickeable
+::ng-deep {
+  .p-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: auto;
+    
+    img {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+  }
+  
+  .p-image-preview-container {
+    pointer-events: auto;
+  }
+}
+

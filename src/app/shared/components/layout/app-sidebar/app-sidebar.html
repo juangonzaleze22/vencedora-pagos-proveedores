@@ -1,0 +1,134 @@
+<!-- Sidebar Desktop -->
+<aside class="hidden md:flex md:flex-col w-64 bg-surface-light dark:bg-surface-dark border-r border-gray-200 dark:border-gray-700 h-full flex-shrink-0">
+  <!-- Logo -->
+  <div class="flex items-center justify-center h-20 border-b border-gray-200 dark:border-gray-700 cursor-pointer" routerLink="/dashboard">
+    <span class="text-white font-bold text-xl tracking-wide flex items-center gap-2">
+      <img src="images/logo.png" alt="Logo" class="w-54 h-10">
+    </span>
+  </div>
+
+  <!-- Navigation -->
+  <div class="flex-1 overflow-y-auto py-4">
+    <nav class="space-y-1 px-2">
+      @for (item of menuItems; track item.route) {
+        <a 
+          [routerLink]="item.route"
+          routerLinkActive="bg-blue-50 dark:bg-slate-700 text-primary dark:text-blue-300"
+          [routerLinkActiveOptions]="{exact: false}"
+          class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors"
+          [class]="item.active ? 'bg-blue-50 dark:bg-slate-700 text-primary dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'">
+          <i [class]="item.icon" class="mr-3"></i>
+          {{ item.label }}
+        </a>
+      }
+      <div class="border-t border-gray-200 dark:border-gray-700 my-4 mx-2"></div>
+      <a 
+        class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+        href="#">
+        <i class="pi pi-cog mr-3"></i>
+        Configuración
+      </a>
+    </nav>
+  </div>
+
+  <!-- User Profile -->
+  <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+    <div class="flex items-center mb-3">
+      <div class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+        {{ userInitials }}
+      </div>
+      <div class="ml-3 flex-1">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ userName }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Supervisor</p>
+      </div>
+    </div>
+    <button 
+      (click)="logout()"
+      class="w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex items-center justify-center gap-2">
+      <i class="pi pi-sign-out"></i>
+      Cerrar Sesión
+    </button>
+  </div>
+</aside>
+
+<!-- Botón Hamburger para Mobile -->
+<button 
+  class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 shadow-lg"
+  (click)="toggleSidebar()"
+  aria-label="Abrir menú">
+  <i class="pi pi-bars text-xl text-gray-700 dark:text-gray-300"></i>
+</button>
+
+<!-- Overlay para cerrar el drawer -->
+@if (sidebarVisible()) {
+  <div 
+    class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+    (click)="closeSidebar()">
+  </div>
+}
+
+<!-- Sidebar Mobile (Drawer) -->
+<aside 
+  class="md:hidden fixed top-0 left-0 h-full w-64 bg-surface-light dark:bg-surface-dark border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out"
+  [class.translate-x-0]="sidebarVisible()"
+  [class.-translate-x-full]="!sidebarVisible()">
+  <div class="flex flex-col h-full">
+    <!-- Header con logo y botón cerrar -->
+    <div class="flex items-center justify-between h-20 border-b border-gray-200 dark:border-gray-700 px-4">
+      <div class="flex items-center justify-center cursor-pointer" routerLink="/dashboard" (click)="closeSidebar()">
+        <img src="images/logo.png" alt="Logo" class="w-54 h-10">
+      </div>
+      <button 
+        (click)="closeSidebar()"
+        class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        aria-label="Cerrar menú">
+        <i class="pi pi-times text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex-1 overflow-y-auto py-4">
+      <nav class="space-y-1 px-2">
+        @for (item of menuItems; track item.route) {
+          <a 
+            [routerLink]="item.route"
+            routerLinkActive="bg-blue-50 dark:bg-slate-700 text-primary dark:text-blue-300"
+            [routerLinkActiveOptions]="{exact: false}"
+            (click)="closeSidebar()"
+            class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors"
+            [class]="item.active ? 'bg-blue-50 dark:bg-slate-700 text-primary dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white'">
+            <i [class]="item.icon" class="mr-3"></i>
+            {{ item.label }}
+          </a>
+        }
+        <div class="border-t border-gray-200 dark:border-gray-700 my-4 mx-2"></div>
+        <a 
+          class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+          href="#"
+          (click)="closeSidebar()">
+          <i class="pi pi-cog mr-3"></i>
+          Configuración
+        </a>
+      </nav>
+    </div>
+
+    <!-- User Profile -->
+    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div class="flex items-center mb-3">
+        <div class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+          {{ userInitials }}
+        </div>
+        <div class="ml-3 flex-1">
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ userName }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Supervisor</p>
+        </div>
+      </div>
+      <button 
+        (click)="logout(); closeSidebar()"
+        class="w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex items-center justify-center gap-2">
+        <i class="pi pi-sign-out"></i>
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,207 @@
+<app-app-header 
+  title="Registro de Proveedores"
+  subtitle="Ingrese la información del nuevo proveedor y sus deudas pendientes" />
+
+<app-page-container maxWidth="max-w-4xl">
+  <div class="mb-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <p-button 
+          icon="pi pi-arrow-left"
+          label="Volver al Dashboard"
+          [text]="true"
+          (onClick)="onCancel()" />
+      </div>
+
+      <app-app-card>
+        <form [formGroup]="providerForm" (ngSubmit)="onSubmit()" class="space-y-8">
+          <!-- Información Básica -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="company_name">
+                Nombre de la Empresa <span class="text-red-500">*</span>
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-building"></i>
+                </p-inputicon>
+                <input
+                  id="company_name"
+                  type="text"
+                  pInputText
+                  formControlName="nombre"
+                  placeholder="Ej. Distribuidora Los Andes C.A."
+                  class="w-full" />
+              </p-iconfield>
+              @if (providerForm.get('nombre')?.invalid && providerForm.get('nombre')?.touched) {
+                <small class="text-red-600">El nombre es requerido</small>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="rif">
+                RIF / Identificación Fiscal
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-id-card"></i>
+                </p-inputicon>
+                <input
+                  id="rif"
+                  type="text"
+                  pInputText
+                  formControlName="rif"
+                  placeholder="J-12345678-9"
+                  class="w-full" />
+              </p-iconfield>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="phone">
+                Teléfono de Contacto
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-phone"></i>
+                </p-inputicon>
+                <input
+                  id="phone"
+                  type="tel"
+                  pInputText
+                  formControlName="phone"
+                  placeholder="+58 412-1234567"
+                  class="w-full" />
+              </p-iconfield>
+              @if (providerForm.get('phone')?.invalid && providerForm.get('phone')?.touched) {
+                <small class="text-red-600">
+                  @if (providerForm.get('phone')?.errors?.['invalidPhone']) {
+                    {{ providerForm.get('phone')?.errors?.['message'] || 'El teléfono debe incluir código de área' }}
+                  }
+                </small>
+              }
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <i class="pi pi-info-circle mr-1"></i>
+                <strong>Importante:</strong> El teléfono debe incluir el código de país internacional (ej: +58, +32, +1, +34) seguido del número local. Ejemplos: +58 412-1234567, +32 22423144, +1 555-1234567
+              </p>
+            </div>
+          </div>
+
+          <!-- Información de Deuda -->
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">Información de Deuda</h3>
+            
+            <!-- Primera fila: 3 columnas -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="credit_days">
+                  Días de Crédito
+                </label>
+                <p-iconfield iconPosition="left" class="w-full">
+                  <p-inputicon>
+                    <i class="pi pi-calendar"></i>
+                  </p-inputicon>
+                  <p-inputNumber
+                    id="credit_days"
+                    formControlName="diasCredito"
+                    [min]="0"
+                    placeholder="Ej. 15, 30, 45"
+                    styleClass="w-full" />
+                </p-iconfield>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="debt_date">
+                  Fecha de la Deuda
+                </label>
+                <p-datePicker
+                  id="debt_date"
+                  formControlName="fechaDeuda"
+                  [showIcon]="true"
+                  dateFormat="dd/mm/yy"
+                  appendTo="body"
+                  styleClass="w-full" />
+                @if (providerForm.get('fechaDeuda')?.invalid && providerForm.get('fechaDeuda')?.touched) {
+                  <small class="text-red-600">La fecha es requerida</small>
+                }
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="due_date">
+                  Fecha de Vencimiento
+                </label>
+                <p-iconfield iconPosition="left" class="w-full">
+                  <p-inputicon>
+                    <i class="pi pi-calendar-times"></i>
+                  </p-inputicon>
+                  <input
+                    id="due_date"
+                    type="text"
+                    pInputText
+                    [value]="fechaVencimiento() ? fechaVencimiento()!.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Se calcula automáticamente'"
+                    readonly
+                    class="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed" />
+                </p-iconfield>
+                <div class="flex justify-between items-center mt-1">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Calculado sumando días de crédito a la fecha de deuda.</p>
+                  <span class="text-xs text-gray-400 italic">Auto-calculado</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Segunda fila: Monto (mitad del ancho) -->
+            <div class="max-w-md">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="amount">
+                Monto Adeudado Inicial <span class="text-red-500">*</span>
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <span class="text-gray-500 dark:text-gray-400 font-bold">$</span>
+                </p-inputicon>
+                <p-inputNumber
+                  id="amount"
+                  formControlName="deudaInicial"
+                  mode="decimal"
+                  [minFractionDigits]="2"
+                  [maxFractionDigits]="2"
+                  placeholder="0.00"
+                  currency="USD"
+                  styleClass="w-full" />
+              </p-iconfield>
+              @if (providerForm.get('deudaInicial')?.invalid && providerForm.get('deudaInicial')?.touched) {
+                <small class="text-red-600">El monto es requerido</small>
+              }
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="pt-6 flex items-center justify-end space-x-4 border-t border-gray-200 dark:border-gray-700">
+            <p-button
+              label="Cancelar"
+              severity="secondary"
+              (onClick)="onCancel()" />
+            <p-button
+              type="submit"
+              label="Registrar Proveedor"
+              icon="pi pi-save"
+              [loading]="isLoading"
+              [disabled]="providerForm.invalid" />
+          </div>
+        </form>
+      </app-app-card>
+
+      <!-- Nota informativa -->
+      <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 flex items-start">
+        <i class="pi pi-info-circle text-blue-500 dark:text-blue-400 mr-3 mt-0.5"></i>
+        <div>
+          <h4 class="text-sm font-medium text-blue-800 dark:text-blue-300">Nota sobre el cálculo de deuda</h4>
+          <p class="mt-1 text-sm text-blue-700 dark:text-blue-400">
+            El monto adeudado inicial será la base para el cálculo. Cada pago registrado posteriormente se restará de este monto y se actualizará de forma automática en el reporte detallado.
+          </p>
+        </div>
+      </div>
+</app-page-container>
+
+<!-- Modal de Mensajes de API -->
+<app-api-message-dialog
+  [visible]="showMessageDialog()"
+  [messageData]="messageData()"
+  (visibleChange)="showMessageDialog.set($event)"
+  (onClose)="onMessageDialogClose()" />

@@ -1,0 +1,60 @@
+// Estilos para el componente de carga de archivos
+:host {
+  display: block;
+  width: 100%;
+}
+
+// Aumentar altura del área de carga y ocultar/cambiar texto "file chosen"
+::ng-deep {
+  .p-fileupload-basic {
+    .p-button {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+    }
+    
+    // Ocultar el texto "file chosen" o "no file chosen" que aparece después del botón
+    .p-fileupload-choose + span,
+    .p-fileupload-filename,
+    .p-fileupload-file-size {
+      display: none !important;
+    }
+  }
+  
+  // Ocultar cualquier texto de estado del file upload en el componente personalizado
+  .file-upload-custom {
+    .p-fileupload-filename,
+    .p-fileupload-file-size,
+    .p-fileupload-choose + span {
+      display: none !important;
+    }
+  }
+
+  // Asegurar que el preview de la imagen esté por encima de otros componentes
+  // PrimeNG Image preview usa overlays que necesitan z-index alto
+  .p-image-preview-container,
+  .p-image-preview-mask,
+  .p-image-preview-overlay {
+    z-index: 9999 !important; // Muy alto para estar por encima de todo
+  }
+
+  .p-image-preview {
+    z-index: 10000 !important;
+  }
+
+  // Asegurar que el overlay del preview esté por encima de cualquier otro componente
+  .p-component-overlay.p-image-preview-overlay {
+    z-index: 9999 !important;
+  }
+
+  // Asegurar que el backdrop/mask también esté por encima
+  .p-image-preview-mask {
+    z-index: 9998 !important;
+  }
+
+  .p-fileupload-basic-content p-button + span { 
+    display: none !important;
+  }
+}
+:host ::ng-deep .p-image-preview-mask {
+  z-index: 10000 !important;
+}

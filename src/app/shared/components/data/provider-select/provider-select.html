@@ -1,0 +1,19 @@
+<p-select
+  [options]="providers"
+  [(ngModel)]="selectedProvider"
+  optionLabel="companyName"
+  [placeholder]="placeholder"
+  [disabled]="disabled"
+  [filter]="true"
+  filterBy="companyName,taxId"
+  (onChange)="onSelectionChange($event.value)"
+  styleClass="w-full">
+  <ng-template let-provider pTemplate="item">
+    <div class="flex flex-col">
+      <span class="font-medium">{{ provider.companyName }}</span>
+      @if (provider.taxId) {
+        <span class="text-xs text-gray-500">{{ provider.taxId }}</span>
+      }
+    </div>
+  </ng-template>
+</p-select>

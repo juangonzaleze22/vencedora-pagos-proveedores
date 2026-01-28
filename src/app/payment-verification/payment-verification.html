@@ -1,0 +1,171 @@
+<app-app-header 
+  title="Verificación de Pagos"
+  subtitle="Valide las transacciones Zelle en tiempo real" />
+
+<app-page-container maxWidth="5xl">
+  <div class="mb-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+    <p-button 
+      icon="pi pi-arrow-left"
+      label="Volver al Dashboard"
+      [text]="true"
+      (onClick)="onCancel()" />
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Búsqueda -->
+        <app-app-card>
+          <div class="max-w-2xl">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="confirmation-code">
+              Introduzca N° de Confirmación
+            </label>
+            <app-payment-autocomplete
+              placeholder="Ej: Últimos 5 dígitos (54892)"
+              [suggestions]="paymentSuggestions"
+              [loading]="searchLoading"
+              (search)="onSearch($event)"
+              (select)="onPaymentSelect($event)">
+            </app-payment-autocomplete>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <i class="pi pi-info-circle text-sm"></i>
+              Ingrese solo los números finales de la referencia bancaria.
+            </p>
+          </div>
+        </app-app-card>
+
+        <!-- Resultado -->
+        @if (searched()) {
+          <app-app-card>
+            <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                @if (result?.encontrado) {
+                  <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                }
+                Resultado de la Búsqueda
+              </h3>
+              @if (result?.encontrado && payment) {
+                <app-payment-status-badge status="verified" />
+              } @else {
+                <app-payment-status-badge status="not-found" />
+              }
+            </div>
+
+            @if (result?.encontrado && payment) {
+              <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Monto Recibido -->
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                    <div class="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
+                      <i class="pi pi-dollar text-2xl"></i>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monto Recibido</p>
+                      <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        $ {{ payment.amount.toFixed(2) }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Emisor -->
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                      <i class="pi pi-user text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Emisor</p>
+                      <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ payment.senderName }}</p>
+                      @if (payment.senderEmail) {
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Zelle ID: <span class="font-medium">{{ payment.senderEmail }}</span>
+                        </p>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Fecha de Envío -->
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                    <div class="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
+                      <i class="pi pi-calendar text-2xl"></i>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Envío</p>
+                      <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                        {{ payment.paymentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                      </p>
+                      <p class="text-sm text-gray-400 dark:text-gray-500">
+                        {{ payment.paymentDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Pago Asignado a -->
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                    <div class="p-3 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
+                      <i class="pi pi-building text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pago Asignado a</p>
+                      <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                        {{ payment.supplier?.companyName || 'N/A' }}
+                      </p>
+                      @if (payment.debt) {
+                        <div class="mt-2 flex flex-col gap-1">
+                          @if (payment.debt.debtNumber) {
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                              Deuda #{{ payment.debt.debtNumber }}
+                            </p>
+                          }
+                          @if (payment.debt.initialAmount !== undefined) {
+                            <p class="text-xs text-gray-500 dark:text-gray-500">
+                              Monto de deuda: <span class="font-semibold">$ {{ payment.debt.initialAmount.toFixed(2) }}</span>
+                            </p>
+                          }
+                        </div>
+                      }
+                      <span class="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        Proveedor
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Acciones -->
+              <div class="px-8 py-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+                <p-button
+                  label="Reportar Problema"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="onReportProblem()" />
+                <p-button
+                  label="Imprimir Recibo"
+                  icon="pi pi-print"
+                  (onClick)="onPrint()" />
+              </div>
+            } @else {
+              <!-- Mensaje de no encontrado -->
+              <div class="p-8">
+                <div class="opacity-60 hover:opacity-100 transition-opacity duration-300 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 p-4 rounded-r-lg">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <i class="pi pi-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                        Pago No Asignado
+                      </h3>
+                      <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                        <p>
+                          No se encontraron registros para la confirmación <strong>#{{ confirmationNumber() }}</strong>. 
+                          Verifique el número o contacte al administrador.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </app-app-card>
+        }
+  </div>
+</app-page-container>
+
