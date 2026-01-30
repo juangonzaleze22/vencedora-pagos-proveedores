@@ -15,8 +15,8 @@
 
   <div class="space-y-8">
         <!-- Filtros -->
-        <app-app-card>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <app-app-card class="card-no-padding">
+          <div class="p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="provider-select">
                 Seleccione el Proveedor
@@ -86,9 +86,42 @@
                     </div>
                   </dl>
                   
-                  <!-- Lista de Deudas con Radio Buttons -->
+                  <!-- Lista de Deudas -->
                   @if (debts().length > 0) {
-                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <!-- Responsive: dropdown en móvil para no scrollear tanto -->
+                    <div class="lg:hidden mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                        <i class="pi pi-list mr-2 text-primary"></i>
+                        Seleccionar Deuda
+                      </h4>
+                      <p-select
+                        [options]="debtOptions()"
+                        optionLabel="label"
+                        optionValue="id"
+                        [ngModel]="selectedDebtId()"
+                        (ngModelChange)="onDebtSelect($event)"
+                        placeholder="Seleccione una deuda"
+                        styleClass="w-full max-w-full">
+                        <ng-template let-option pTemplate="item">
+                          <div class="flex flex-col gap-1 py-1 min-w-0 text-left">
+                            <span class="font-semibold text-slate-900 dark:text-white">Deuda #{{ option.id }}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ option.statusLabel }}</span>
+                            <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                              <span>Inicial:</span>
+                              <span class="font-medium">$ {{ option.initialAmount }}</span>
+                              <span>Restante:</span>
+                              <span class="font-semibold text-red-600 dark:text-red-400">$ {{ option.remainingAmount }}</span>
+                              <span>Vencimiento:</span>
+                              <span>{{ option.dueDate | date:'dd/MM/yyyy' }}</span>
+                              <span>Pagos Activos:</span>
+                              <span>{{ option.activePayments }}</span>
+                            </div>
+                          </div>
+                        </ng-template>
+                      </p-select>
+                    </div>
+                    <!-- Desktop: lista de tarjetas -->
+                    <div class="hidden lg:block mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                         <i class="pi pi-list mr-2 text-primary"></i>
                         Seleccionar Deuda
@@ -285,54 +318,164 @@
             }
 
             <!-- Tabla de Pagos -->
-            <app-app-card>
-              <div class="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            <app-app-card class="card-no-padding">
+              <div class="px-3 py-3 sm:px-6 sm:py-5 flex justify-between items-center gap-3 border-b border-gray-200 dark:border-gray-700 flex-wrap sm:flex-nowrap">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white min-w-0">
                   @if (selectedDebtId()) {
                     Pagos de la Deuda #{{ selectedDebt()?.id }}
                   } @else {
                     Seleccione una deuda para ver sus pagos
                   }
                 </h3>
-                <div class="flex items-center gap-3">
-                  @if (selectedDebtId()) {
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">Filtro:</span>
-                      <p-button
-                        label="Activos"
-                        [outlined]="paymentFilter() !== 'active'"
-                        [severity]="paymentFilter() === 'active' ? 'success' : 'secondary'"
-                        [text]="paymentFilter() !== 'active'"
-                        size="small"
-                        icon="pi pi-check-circle"
-                        (onClick)="onPaymentFilterChange('active')"
-                        [pTooltip]="'Mostrar solo pagos activos'"
-                        tooltipPosition="bottom" />
-                      @if (deletedPayments().length > 0) {
-                        <p-button
-                          [label]="'Eliminados (' + deletedPayments().length + ')'"
-                          [outlined]="paymentFilter() !== 'deleted'"
-                          [severity]="paymentFilter() === 'deleted' ? 'danger' : 'secondary'"
-                          [text]="paymentFilter() !== 'deleted'"
-                          size="small"
-                          icon="pi pi-trash"
-                          (onClick)="onPaymentFilterChange('deleted')"
-                          [pTooltip]="'Mostrar solo pagos eliminados'"
-                          tooltipPosition="bottom" />
-                      }
-                    </div>
-                  }
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                @if (selectedDebtId()) {
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-sm text-gray-600 dark:text-gray-400" [ngClass]="paymentFilter() === 'active' ? 'font-medium text-gray-900 dark:text-white' : ''">Activos</span>
+                    <p-toggleswitch
+                      [ngModel]="paymentFilter() === 'deleted'"
+                      (ngModelChange)="onPaymentFilterSwitch($event)"
+                      inputId="payment-filter-switch" />
+                    <span class="text-sm text-gray-600 dark:text-gray-400" [ngClass]="paymentFilter() === 'deleted' ? 'font-medium text-gray-900 dark:text-white' : ''">Eliminados</span>
+                  </div>
+                  <span class="hidden lg:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                     {{ displayedPayments().length }} @if (paymentFilter() === 'active') {
                       <span class="ml-1 text-gray-600 dark:text-gray-400">activos</span>
-                    } @else if (paymentFilter() === 'deleted') {
+                    } @else {
                       <span class="ml-1 text-gray-600 dark:text-gray-400">eliminados</span>
                     }
                   </span>
-                </div>
+                }
               </div>
               
-              <div class="overflow-x-auto">
+              <!-- Responsive: cards en lugar de tabla -->
+              <div class="lg:hidden p-3 sm:p-4 space-y-4">
+                @if (loadingPayments()) {
+                  <div class="flex justify-center py-8">
+                    <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
+                  </div>
+                } @else if (displayedPayments().length === 0) {
+                  <p class="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                    @if (selectedDebtId()) {
+                      No hay pagos registrados para esta deuda
+                    } @else {
+                      Seleccione una deuda para ver sus pagos
+                    }
+                  </p>
+                } @else {
+                  @for (payment of displayedPayments(); track payment.id) {
+                    <div
+                      class="rounded-xl border-2 p-4 space-y-3 min-w-0"
+                      [ngClass]="{
+                        'opacity-70 bg-red-50/30 dark:bg-red-900/20 border-red-500': payment.deleted,
+                        'border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800/50': !payment.deleted
+                      }">
+                      <!-- Header: #id, nombre, menú acciones -->
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            @if (payment.deleted) {
+                              <span class="text-xs font-medium text-gray-500 line-through">#{{ payment.id }}</span>
+                            } @else {
+                              <span
+                                class="text-xs font-medium text-primary cursor-pointer hover:underline"
+                                (click)="onViewPaymentDetail(payment)">
+                                #{{ payment.id }}
+                              </span>
+                            }
+                            @if (payment.senderName) {
+                              <span
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                                [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                                {{ payment.senderName }}
+                              </span>
+                            }
+                          </div>
+                          @if (payment.senderEmail) {
+                            <a
+                              [href]="'mailto:' + payment.senderEmail"
+                              class="text-xs text-primary hover:underline mt-0.5 block"
+                              [ngClass]="{'line-through text-gray-500': payment.deleted}"
+                              (click)="$event.stopPropagation()">
+                              {{ payment.senderEmail }}
+                            </a>
+                          } @else if (payment.senderName) {
+                            <span class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 block">Sin correo</span>
+                          }
+                        </div>
+                        <div class="shrink-0">
+                          <p-button
+                            icon="pi pi-ellipsis-v"
+                            [text]="true"
+                            severity="secondary"
+                            [rounded]="true"
+                            size="small"
+                            (onClick)="paymentMenuMobile.toggle($event)"
+                            [pTooltip]="'Acciones'"
+                            tooltipPosition="top" />
+                          <p-menu
+                            #paymentMenuMobile
+                            [model]="getPaymentMenuItems(payment)"
+                            [popup]="true"
+                            [appendTo]="'body'" />
+                        </div>
+                      </div>
+                      <!-- Fecha, Método, Monto en grid -->
+                      <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">Fecha</span>
+                          <span [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                            {{ payment.paymentDate | date:'dd/MM/yyyy' }}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">Método</span>
+                          <span
+                            class="px-1.5 py-0.5 rounded text-xs font-medium inline-block w-fit"
+                            [ngClass]="{
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': payment.paymentMethod === 'Zelle' && !payment.deleted,
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': payment.paymentMethod === 'Transferencia' && !payment.deleted,
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': payment.paymentMethod === 'Efectivo' && !payment.deleted,
+                              'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 line-through': payment.deleted
+                            }">
+                            {{ payment.paymentMethod }}
+                          </span>
+                          @if (payment.isBolivares && payment.exchangeRate) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 block">Tasa: Bs {{ payment.exchangeRate | number:'1.2-2' }}</span>
+                          }
+                        </div>
+                        <div>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">Monto</span>
+                          <span class="font-semibold" [ngClass]="{'line-through text-gray-500': payment.deleted}">
+                            $ {{ payment.amount.toFixed(2) }}
+                          </span>
+                          @if (payment.isBolivares && payment.amountInBolivares) {
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 block">Bs {{ payment.amountInBolivares | number:'1.2-2' }}</span>
+                          }
+                        </div>
+                        <div>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">Comprobante</span>
+                          @if (payment.receiptFile) {
+                            <span [ngClass]="{'opacity-50': payment.deleted}">
+                              <app-lazy-image
+                                [src]="payment.receiptFile"
+                                [alt]="'Comprobante de pago #' + payment.id"
+                                width="48px"
+                                height="48px"
+                                objectFit="cover"
+                                [rounded]="true"
+                                [preview]="true" />
+                            </span>
+                          } @else {
+                            <span class="text-xs text-gray-400">—</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+
+              <!-- Desktop: tabla -->
+              <div class="hidden lg:block overflow-x-auto p-4">
                 <p-table [value]="displayedPayments()" [loading]="loadingPayments()" styleClass="p-datatable-striped p-datatable-sm">
                   <ng-template pTemplate="header">
                     <tr>
@@ -481,19 +624,19 @@
                     </ng-template>
                   }
                 </p-table>
-                
-                <!-- Paginación para pagos de deuda -->
-                @if (selectedDebtId() && paymentsPagination().totalPages > 1) {
-                  <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                    <p-paginator
-                      [rows]="paymentsPageSize()"
-                      [totalRecords]="paymentsTotalRecords()"
-                      [first]="(paymentsPage() - 1) * paymentsPageSize()"
-                      (onPageChange)="onPageChange($event)"
-                      [rowsPerPageOptions]="[10, 20, 50]" />
-                  </div>
-                }
               </div>
+
+              <!-- Paginación (compartida: cards y tabla) -->
+              @if (selectedDebtId() && paymentsPagination().totalPages > 1) {
+                <div class="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
+                  <p-paginator
+                    [rows]="paymentsPageSize()"
+                    [totalRecords]="paymentsTotalRecords()"
+                    [first]="(paymentsPage() - 1) * paymentsPageSize()"
+                    (onPageChange)="onPageChange($event)"
+                    [rowsPerPageOptions]="[10, 20, 50]" />
+                </div>
+              }
             </app-app-card>
           </div>
         </div>

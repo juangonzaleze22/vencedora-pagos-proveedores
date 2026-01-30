@@ -11,6 +11,12 @@ export interface CreateOrderData {
   creditDays: number;
 }
 
+export interface UpdateOrderData {
+  dispatchDate: Date;
+  creditDays: number;
+  amount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   constructor(private apiService: ApiService) {}
@@ -53,6 +59,26 @@ export class OrderService {
           } as PaginatedResponse<ProviderOrder>;
         }
         throw new Error(response.message || 'Error al listar pedidos');
+      })
+    );
+  }
+
+  /**
+   * Actualiza un pedido existente (PUT /api/orders/:id)
+   */
+  update(id: number, data: UpdateOrderData): Observable<ProviderOrder> {
+    const payload = {
+      dispatchDate: data.dispatchDate.toISOString().split('T')[0],
+      creditDays: data.creditDays,
+      amount: data.amount
+    };
+
+    return this.apiService.put<ProviderOrder>(`/orders/${id}`, payload).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return this.mapOrderFromAPI(response.data);
+        }
+        throw new Error(response.message || 'Error al actualizar pedido');
       })
     );
   }

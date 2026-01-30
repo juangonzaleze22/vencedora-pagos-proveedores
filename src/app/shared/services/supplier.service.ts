@@ -97,6 +97,19 @@ export class SupplierService {
   }
 
   /**
+   * Elimina un proveedor (y sus deudas y pagos relacionados en el backend)
+   */
+  delete(id: number): Observable<void> {
+    return this.apiService.delete<void>(`/suppliers/${id}`).pipe(
+      map(response => {
+        if (!response.success && response.message) {
+          throw new Error(response.message);
+        }
+      })
+    );
+  }
+
+  /**
    * Obtiene las deudas de un proveedor
    */
   getDebts(id: number, params?: DebtListParams): Observable<PaginatedResponse<Debt>> {

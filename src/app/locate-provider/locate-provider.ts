@@ -6,6 +6,7 @@ import { AppHeader } from '../shared/components/layout/app-header/app-header';
 import { PageContainer } from '../shared/components/layout/page-container/page-container';
 import { AppCard } from '../shared/components/layout/app-card/app-card';
 import { SupplierAutocomplete } from '../shared/components/ui/supplier-autocomplete/supplier-autocomplete';
+import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
@@ -15,11 +16,16 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
+import { TooltipModule } from 'primeng/tooltip';
 import { SupplierService } from '../shared/services/supplier.service';
 import { OrderService } from '../shared/services/order.service';
 import { ReportService } from '../shared/services/report.service';
 import { Provider, Debt } from '../shared/models/provider.model';
 import { Location } from '@angular/common';
+import { ConfirmDialog } from '../shared/components/ui/confirm-dialog/confirm-dialog';
+import { AuthContext } from '../contexts/auth.context';
 
 @Component({
   selector: 'app-locate-provider',
@@ -32,14 +38,18 @@ import { Location } from '@angular/common';
     PageContainer,
     AppCard,
     SupplierAutocomplete,
+    InputTextModule,
     InputNumberModule,
     DatePickerModule,
     ButtonModule,
+    MenuModule,
+    TooltipModule,
     ToastModule,
     TagModule,
     IconFieldModule,
     InputIconModule,
-    DatePipe
+    DatePipe,
+    ConfirmDialog
   ],
   providers: [MessageService],
   templateUrl: './locate-provider.html',
@@ -63,6 +73,12 @@ export class LocateProvider {
 
   orderForm: FormGroup;
   loading = signal<boolean>(false);
+  editingOrderId = signal<number | null>(null);
+  fechaVencimiento = signal<Date | null>(null);
+  showConfirmDeleteProvider = signal<boolean>(false);
+  providerToDelete = signal<Provider | null>(null);
+  showConfirmDeleteDebt = signal<boolean>(false);
+  debtToDelete = signal<Debt | null>(null);
 
   constructor(
     private fb: FormBuilder,
@@ -72,13 +88,29 @@ export class LocateProvider {
     private messageService: MessageService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private location: Location
+    private location: Location,
+    private authContext: AuthContext
   ) {
     this.orderForm = this.fb.group({
       monto: ['', [Validators.required, Validators.min(0.01)]],
       fechaDespacho: ['', [Validators.required]],
       diasCredito: [30, [Validators.required, Validators.min(0)]]
     });
+
+    this.orderForm.get('fechaDespacho')?.valueChanges.subscribe(() => this.calculateDueDate());
+    this.orderForm.get('diasCredito')?.valueChanges.subscribe(() => this.calculateDueDate());
+  }
+
+  private calculateDueDate(): void {
+    const fechaDespacho = this.orderForm.get('fechaDespacho')?.value;
+    const diasCredito = this.orderForm.get('diasCredito')?.value ?? 0;
+    if (fechaDespacho && diasCredito !== '' && diasCredito !== null) {
+      const fecha = new Date(fechaDespacho);
+      fecha.setDate(fecha.getDate() + Number(diasCredito));
+      this.fechaVencimiento.set(fecha);
+    } else {
+      this.fechaVencimiento.set(null);
+    }
   }
 
   get provider() {
@@ -87,6 +119,11 @@ export class LocateProvider {
 
   get isLoading() {
     return this.loading();
+  }
+
+  /** Los cajeros no pueden editar/eliminar distribuidor ni deudas */
+  get canEditProviderAndDebts(): boolean {
+    return !this.authContext.hasRole('CAJERO');
   }
 
   onSearch(query: string) {
@@ -287,6 +324,45 @@ export class LocateProvider {
     return Math.abs(value);
   }
 
+  onEditDebt(debt: Debt): void {
+    if (!this.canEditProviderAndDebts) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin permisos',
+        detail: 'No tiene permisos para editar deudas.'
+      });
+      return;
+    }
+    if (!debt.orderId) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Esta deuda no tiene una orden asociada'
+      });
+      return;
+    }
+    this.orderService.getById(debt.orderId).subscribe({
+      next: (order) => {
+        this.orderForm.patchValue({
+          fechaDespacho: order.dispatchDate,
+          diasCredito: order.creditDays,
+          monto: order.amount
+        });
+        this.editingOrderId.set(order.id);
+        this.calculateDueDate();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error al cargar pedido para editar:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el pedido para editar'
+        });
+      }
+    });
+  }
+
   onViewOrderDetail(debt: Debt) {
     if (debt.orderId) {
       // Navegar al reporte detallado con el orderId
@@ -341,20 +417,72 @@ export class LocateProvider {
   }
 
   onAddOrder() {
+    const orderId = this.editingOrderId();
+    if (orderId !== null && !this.canEditProviderAndDebts) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin permisos',
+        detail: 'No tiene permisos para editar deudas.'
+      });
+      return;
+    }
     const currentProvider = this.provider;
-    if (this.orderForm.valid && currentProvider) {
-      this.loading.set(true);
-      const formValue = this.orderForm.value;
-      
-      // Convertir fechaDespacho a Date si viene como string
-      const dispatchDate = formValue.fechaDespacho instanceof Date 
-        ? formValue.fechaDespacho 
-        : new Date(formValue.fechaDespacho);
-      
+    if (!this.orderForm.valid || !currentProvider) {
+      Object.keys(this.orderForm.controls).forEach(key => {
+        this.orderForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.loading.set(true);
+    const formValue = this.orderForm.value;
+    const dispatchDate = formValue.fechaDespacho instanceof Date
+      ? formValue.fechaDespacho
+      : new Date(formValue.fechaDespacho);
+
+    const onSuccess = () => {
+      this.loading.set(false);
+      this.editingOrderId.set(null);
+      this.fechaVencimiento.set(null);
+      this.orderForm.reset({ diasCredito: 30 });
+      this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
+        next: (report) => {
+          this.selectedProvider.set(report.supplier);
+          this.debts.set(report.debts || []);
+          this.cdr.detectChanges();
+        }
+      });
+    };
+
+    if (orderId !== null) {
+      this.orderService.update(orderId, {
+        dispatchDate,
+        creditDays: formValue.diasCredito,
+        amount: formValue.monto
+      }).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Pedido actualizado correctamente'
+          });
+          onSuccess();
+        },
+        error: (error) => {
+          this.loading.set(false);
+          console.error('Error al actualizar pedido:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.message || 'Error al actualizar el pedido'
+          });
+        }
+      });
+    } else {
       this.orderService.create({
         supplierId: currentProvider.id,
         amount: formValue.monto,
-        dispatchDate: dispatchDate,
+        dispatchDate,
         creditDays: formValue.diasCredito
       }).subscribe({
         next: () => {
@@ -363,18 +491,7 @@ export class LocateProvider {
             summary: 'Éxito',
             detail: 'Pedido agregado correctamente'
           });
-          this.loading.set(false);
-          
-          // Recargar proveedor actualizado con todas las deudas
-          this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
-            next: (report) => {
-              this.selectedProvider.set(report.supplier);
-              this.debts.set(report.debts || []);
-              this.cdr.detectChanges();
-            }
-          });
-          
-          this.orderForm.reset({ diasCredito: 30 });
+          onSuccess();
         },
         error: (error) => {
           this.loading.set(false);
@@ -386,19 +503,162 @@ export class LocateProvider {
           });
         }
       });
-    } else {
-      // Marcar todos los campos como touched para mostrar errores
-      Object.keys(this.orderForm.controls).forEach(key => {
-        this.orderForm.get(key)?.markAsTouched();
-      });
     }
   }
 
   onCancel() {
+    this.editingOrderId.set(null);
+    this.fechaVencimiento.set(null);
     this.orderForm.reset({ diasCredito: 30 });
   }
 
   onBackToDashboard() {
     this.location.back();
+  }
+
+  getProviderMenuItems(): MenuItem[] {
+    return [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.onEditProvider()
+      },
+      {
+        separator: true
+      },
+      {
+        label: 'Eliminar',
+        icon: 'pi pi-trash',
+        styleClass: 'text-red-600',
+        command: () => this.onDeleteProvider()
+      }
+    ];
+  }
+
+  getDebtMenuItems(debt: Debt): MenuItem[] {
+    const items: MenuItem[] = [];
+    if (debt.orderId) {
+      items.push({
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.onEditDebt(debt)
+      });
+    }
+    items.push(
+      { separator: true },
+      {
+        label: 'Eliminar',
+        icon: 'pi pi-trash',
+        styleClass: 'text-red-600',
+        command: () => this.onDeleteDebt(debt)
+      }
+    );
+    return items;
+  }
+
+  onEditProvider() {
+    if (!this.canEditProviderAndDebts) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin permisos',
+        detail: 'No tiene permisos para editar distribuidores.'
+      });
+      return;
+    }
+    const currentProvider = this.provider;
+    if (currentProvider?.id) {
+      this.router.navigate(['/providers/register'], {
+        queryParams: { editId: currentProvider.id }
+      });
+    }
+  }
+
+  onDeleteProvider(): void {
+    if (!this.canEditProviderAndDebts) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin permisos',
+        detail: 'No tiene permisos para eliminar distribuidores.'
+      });
+      return;
+    }
+    const currentProvider = this.provider;
+    if (currentProvider) {
+      this.providerToDelete.set(currentProvider);
+      this.showConfirmDeleteProvider.set(true);
+    }
+  }
+
+  onConfirmDeleteProvider(): void {
+    const provider = this.providerToDelete();
+    this.providerToDelete.set(null);
+    this.showConfirmDeleteProvider.set(false);
+    if (!provider?.id) {
+      return;
+    }
+    this.loading.set(true);
+    this.supplierService.delete(provider.id).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Distribuidor eliminado correctamente.'
+        });
+        this.selectedProvider.set(null);
+        this.debts.set([]);
+        this.editingOrderId.set(null);
+        this.fechaVencimiento.set(null);
+        this.orderForm.reset({ diasCredito: 30 });
+        // Refrescar sugerencias del autocomplete para que no aparezcan proveedores eliminados
+        this.onSearch(this.searchQuery);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.message || 'Error al eliminar el distribuidor.'
+        });
+      }
+    });
+  }
+
+  onCancelDeleteProvider(): void {
+    this.providerToDelete.set(null);
+    this.showConfirmDeleteProvider.set(false);
+  }
+
+  onDeleteDebt(debt: Debt): void {
+    if (!this.canEditProviderAndDebts) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin permisos',
+        detail: 'No tiene permisos para eliminar deudas.'
+      });
+      return;
+    }
+    this.debtToDelete.set(debt);
+    this.showConfirmDeleteDebt.set(true);
+  }
+
+  onConfirmDeleteDebt(): void {
+    const debt = this.debtToDelete();
+    this.debtToDelete.set(null);
+    this.showConfirmDeleteDebt.set(false);
+    // De momento solo cerramos el modal; la eliminación por API se implementará después
+    if (debt) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Eliminar deuda',
+        detail: 'La eliminación de deudas estará disponible próximamente.'
+      });
+    }
+  }
+
+  onCancelDeleteDebt(): void {
+    this.debtToDelete.set(null);
+    this.showConfirmDeleteDebt.set(false);
   }
 }

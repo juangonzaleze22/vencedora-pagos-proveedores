@@ -1,15 +1,17 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { AuthContext } from '../../../../contexts/auth.context';
-import { ButtonModule } from 'primeng/button';
+import { ThemeService } from '../../../../shared/services/theme.service';
+import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { BadgeModule } from 'primeng/badge';
+import { MenuModule } from 'primeng/menu';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-app-header',
   standalone: true,
-  imports: [CommonModule, ButtonModule, AvatarModule, BadgeModule],
+  imports: [CommonModule, AvatarModule, BadgeModule, MenuModule, TooltipModule],
   templateUrl: './app-header.html',
   styleUrl: './app-header.scss'
 })
@@ -19,7 +21,7 @@ export class AppHeader {
 
   constructor(
     public authContext: AuthContext,
-    private router: Router
+    public themeService: ThemeService
   ) {}
 
   get userName(): string {
@@ -31,11 +33,25 @@ export class AppHeader {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  onNotificationClick() {
-    // TODO: Implementar notificaciones
+  getProfileMenuItems(): MenuItem[] {
+    const isDark = this.themeService.isDark();
+    return [
+      {
+        label: isDark ? 'Tema claro' : 'Tema oscuro',
+        icon: isDark ? 'pi pi-sun' : 'pi pi-moon',
+        command: () => this.themeService.toggleTheme()
+      },
+      { separator: true },
+      {
+        label: 'Cerrar sesión',
+        icon: 'pi pi-sign-out',
+        styleClass: 'text-red-600',
+        command: () => this.logout()
+      }
+    ];
   }
 
-  onProfileClick() {
-    // TODO: Implementar menú de perfil
+  logout(): void {
+    this.authContext.logout();
   }
 }

@@ -1,14 +1,59 @@
+:host {
+    display: block;
+    min-width: 0; // Evita overflow en móvil en flex/grid
+}
+
 :host ::ng-deep {
     .card-no-padding {
         &.p-card,
         .p-card,
-        .p-card-body, 
+        .p-card-body,
         .p-card-content {
             padding: 0 !important;
         }
     }
 }
 
-:host ::ng-deep .card-no-padding .p-card-header{ 
+:host ::ng-deep .card-no-padding .p-card-header {
     border-radius: 12px 12px 0 0 !important;
+}
+
+// Estilos para el menú de acciones (mismo estilo que reporte de pagos)
+:host ::ng-deep .p-menu {
+  min-width: 200px;
+
+  .p-menuitem-link {
+    padding: 0.75rem 1rem;
+
+    &:hover {
+      background-color: var(--p-surface-hover);
+    }
+  }
+
+  .p-menuitem-text {
+    font-weight: 500;
+  }
+
+  .p-menuitem-icon {
+    margin-right: 0.75rem;
+  }
+
+  .p-menu-separator {
+    margin: 0.5rem 0;
+  }
+
+  .p-menuitem.p-disabled {
+    opacity: 0.6;
+  }
+}
+
+// Ajustes responsive para inputs PrimeNG en móvil
+@media (max-width: 639px) {
+    :host ::ng-deep {
+        .p-inputtext,
+        .p-inputnumber-input,
+        .p-datepicker-input {
+            font-size: 16px !important; // Evita zoom en iOS al enfocar
+        }
+    }
 }

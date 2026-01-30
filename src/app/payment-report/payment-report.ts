@@ -16,6 +16,8 @@ import { ImageModule } from 'primeng/image';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { MenuModule } from 'primeng/menu';
+import { SelectModule } from 'primeng/select';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { MenuItem } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { LazyImage } from '../shared/components/ui/lazy-image/lazy-image';
@@ -47,6 +49,8 @@ import { Provider } from '../shared/models/provider.model';
     TooltipModule,
     DialogModule,
     MenuModule,
+    SelectModule,
+    ToggleSwitchModule,
     LazyImage,
     ConfirmDialog,
     OrderDetailDialog
@@ -255,6 +259,19 @@ export class PaymentReport implements OnInit {
     return debts.find((d: any) => d.id === debtId) || null;
   });
 
+  /** Opciones para el dropdown de deudas en responsive (misma info que las tarjetas) */
+  debtOptions = computed(() => {
+    return this.debts().map((d: any) => ({
+      id: d.id,
+      label: `Deuda #${d.id}`,
+      statusLabel: this.getStatusLabel(d.status),
+      initialAmount: (d.initialAmount ?? 0).toFixed(2),
+      remainingAmount: (d.remainingAmount ?? 0).toFixed(2),
+      dueDate: d.dueDate,
+      activePayments: this.getActivePaymentsCount(d)
+    }));
+  });
+
   displayedPayments = computed((): Payment[] => {
     const allPayments = this.payments();
     const filter = this.paymentFilter();
@@ -460,6 +477,12 @@ export class PaymentReport implements OnInit {
 
   onPaymentFilterChange(filter: 'active' | 'deleted') {
     this.paymentFilter.set(filter);
+    this.syncUrl(true);
+  }
+
+  /** Usado por el p-inputSwitch: true = eliminados, false = activos */
+  onPaymentFilterSwitch(showDeleted: boolean) {
+    this.paymentFilter.set(showDeleted ? 'deleted' : 'active');
     this.syncUrl(true);
   }
 

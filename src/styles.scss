@@ -35,9 +35,62 @@ body {
   font-family: 'Manrope', sans-serif;
 }
 
-/* Dark mode support */
+/* Dark mode: mejor contraste de paleta */
 .dark {
   color-scheme: dark;
+}
+
+/* Zonas rojas (deuda / requiere atención): fondo y texto más legibles */
+.dark .dark\:bg-red-900\/20 {
+  background-color: rgb(127 29 29 / 0.4);
+}
+.dark .dark\:text-red-400,
+.dark .dark\:text-red-500 {
+  color: rgb(252 165 165); /* red-300, más legible sobre fondo oscuro */
+}
+.dark .dark\:text-red-600 {
+  color: rgb(248 113 113); /* red-400 */
+}
+
+/* Texto secundario en dark (paleta neutra zinc) */
+.dark .dark\:text-gray-400 {
+  color: rgb(161 161 170); /* zinc-400 */
+}
+.dark .dark\:text-gray-500 {
+  color: rgb(161 161 170); /* zinc-400 */
+}
+.dark .dark\:text-slate-400 {
+  color: rgb(161 161 170);
+}
+.dark .dark\:text-slate-500 {
+  color: rgb(161 161 170);
+}
+
+/* Inputs y superficies en dark: escala neutra zinc */
+.dark .dark\:bg-gray-800 {
+  background-color: rgb(39 39 42); /* zinc-800 */
+}
+.dark .dark\:bg-gray-900 {
+  background-color: rgb(24 24 27); /* zinc-900 */
+}
+.dark .dark\:border-gray-600 {
+  border-color: rgb(82 82 91); /* zinc-600 */
+}
+.dark .dark\:border-gray-700 {
+  border-color: rgb(82 82 91); /* zinc-600 */
+}
+.dark .dark\:bg-slate-800\/50 {
+  background-color: rgb(39 39 42 / 0.5); /* zinc-800 */
+}
+.dark .dark\:bg-slate-700 {
+  background-color: rgb(63 63 70); /* zinc-700 */
+}
+/* Bordes grises claros en dark → zinc-600 para coherencia */
+.dark .dark\:border-gray-200 {
+  border-color: rgb(82 82 91); /* zinc-600 */
+}
+.dark .dark\:border-gray-300 {
+  border-color: rgb(82 82 91);
 }
 
 .p-datepicker {

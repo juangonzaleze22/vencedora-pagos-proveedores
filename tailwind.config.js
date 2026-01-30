@@ -11,15 +11,15 @@ module.exports = {
         "primary-hover": "#2563eb", // Blue-600
         "primary-dark": "#1e3a8a", // Navy Blue (para algunas pantallas)
         "background-light": "#f3f4f6", // Gray-100
-        "background-dark": "#0f172a", // Slate-900
+        "background-dark": "#18181b", // Zinc-900 (más suave que 950)
         "surface-light": "#ffffff",
-        "surface-dark": "#1e293b", // Slate-800
+        "surface-dark": "#27272a", // Zinc-800 (cards/superficies)
         "card-light": "#ffffff",
-        "card-dark": "#1f2937", // Gray-800 (alternativa)
+        "card-dark": "#3f3f46", // Zinc-700 (cards destacan)
         "input-light": "#f9fafb",
-        "input-dark": "#374151",
+        "input-dark": "#27272a", // Zinc-800
         "border-light": "#e5e7eb",
-        "border-dark": "#4b5563",
+        "border-dark": "#52525b", // Zinc-600 (bordes visibles, neutros)
       },
       fontFamily: {
         display: ["Manrope", "sans-serif"], // Para login

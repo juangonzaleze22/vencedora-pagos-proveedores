@@ -10,26 +10,30 @@
       styleClass="w-full"
       (onSelect)="onDateSelect($event)" />
   </div> -->
-  <div class="flex gap-2 flex-wrap">
+  <div class="flex gap-1 sm:gap-2 flex-wrap">
     <p-button 
       label="Hoy"
       [text]="selectedPeriod !== 'today'"
       size="small"
+      styleClass="!text-xs sm:!text-sm"
       (onClick)="onQuickSelect('today')" />
     <p-button 
       label="Hace 7 días"
       [text]="selectedPeriod !== 'week'"
       size="small"
+      styleClass="!text-xs sm:!text-sm"
       (onClick)="onQuickSelect('week')" />
     <p-button 
       label="Este Mes"
       [text]="selectedPeriod !== 'month'"
       size="small"
+      styleClass="!text-xs sm:!text-sm"
       (onClick)="onQuickSelect('month')" />
     <p-button 
       label="Todos"
       [text]="selectedPeriod !== 'all'"
       size="small"
+      styleClass="!text-xs sm:!text-sm"
       (onClick)="onQuickSelect('all')" />
   </div>
 </div>

@@ -105,7 +105,7 @@ export class AuthService {
    */
   hasRole(role: string): boolean {
     const user = this._currentUser();
-    return user?.role.nombre === role;
+    return user?.role?.nombre === role;
   }
 
   /**
