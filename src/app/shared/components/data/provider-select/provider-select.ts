@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { Provider } from '../../../models/provider.model';
+import { SelectFilterService } from '../../../services/select-filter.service';
 
 @Component({
   selector: 'app-provider-select',
@@ -25,7 +26,9 @@ export class ProviderSelect implements ControlValueAccessor {
   @Output() selectionChange = new EventEmitter<Provider | null>();
 
   selectedProvider: Provider | null = null;
-  
+
+  constructor(public selectFilter: SelectFilterService) {}
+
   // ControlValueAccessor implementation
   private onChange = (value: number | null) => {};
   private onTouched = () => {};

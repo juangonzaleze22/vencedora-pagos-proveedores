@@ -4,7 +4,7 @@
   optionLabel="companyName"
   [placeholder]="placeholder"
   [disabled]="disabled"
-  [filter]="true"
+  [filter]="selectFilter.filterEnabled()"
   filterBy="companyName,taxId"
   (onChange)="onSelectionChange($event.value)"
   styleClass="w-full">

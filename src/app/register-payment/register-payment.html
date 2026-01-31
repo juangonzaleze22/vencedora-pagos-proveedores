@@ -141,6 +141,8 @@
                 [options]="filteredPaymentMethods()"
                 optionLabel="label"
                 optionValue="value"
+                [filter]="selectFilter.filterEnabled()"
+                filterBy="label,value"
                 placeholder="Seleccione método de pago"
                 styleClass="w-full" />
             </div>
@@ -173,6 +175,8 @@
               [options]="debts()"
               [optionLabel]="'id'"
               [optionValue]="'id'"
+              [filter]="selectFilter.filterEnabled()"
+              filterBy="id"
               placeholder="Seleccione una deuda"
               [showClear]="true"
               styleClass="w-full">

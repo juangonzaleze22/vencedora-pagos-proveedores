@@ -20,6 +20,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { MessageService } from 'primeng/api';
 import { PaymentService } from '../shared/services/payment.service';
 import { SupplierService } from '../shared/services/supplier.service';
+import { SelectFilterService } from '../shared/services/select-filter.service';
 import { Provider } from '../shared/models/provider.model';
 
 @Component({
@@ -87,7 +88,8 @@ export class RegisterPayment implements OnInit {
     private paymentService: PaymentService,
     private supplierService: SupplierService,
     private messageService: MessageService,
-    private location: Location
+    private location: Location,
+    public selectFilter: SelectFilterService
   ) {
     this.paymentForm = this.fb.group({
       emisor: ['', [Validators.required]],

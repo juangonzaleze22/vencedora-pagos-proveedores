@@ -26,6 +26,7 @@ import { OrderDetailDialog } from '../shared/components/ui/order-detail-dialog/o
 import { ReportService } from '../shared/services/report.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { PaymentService } from '../shared/services/payment.service';
+import { SelectFilterService } from '../shared/services/select-filter.service';
 import { Payment } from '../shared/models/payment.model';
 import { Provider } from '../shared/models/provider.model';
 
@@ -107,7 +108,8 @@ export class PaymentReport implements OnInit {
     private messageService: MessageService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    public selectFilter: SelectFilterService
   ) {
     this.loadProviders();
   }
