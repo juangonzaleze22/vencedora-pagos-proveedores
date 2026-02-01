@@ -27,6 +27,7 @@ import { ReportService } from '../shared/services/report.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { PaymentService } from '../shared/services/payment.service';
 import { SelectFilterService } from '../shared/services/select-filter.service';
+import { AuthContext } from '../contexts/auth.context';
 import { Payment } from '../shared/models/payment.model';
 import { Provider } from '../shared/models/provider.model';
 
@@ -101,6 +102,11 @@ export class PaymentReport implements OnInit {
   showOrderDetailDialog = signal<boolean>(false);
   selectedOrderId = signal<number | null>(null);
 
+  /** Los cajeros no pueden editar ni eliminar pagos */
+  get canEditPayments(): boolean {
+    return !this.authContext.hasRole('CAJERO');
+  }
+
   constructor(
     private reportService: ReportService,
     private supplierService: SupplierService,
@@ -109,7 +115,8 @@ export class PaymentReport implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private location: Location,
-    public selectFilter: SelectFilterService
+    public selectFilter: SelectFilterService,
+    private authContext: AuthContext
   ) {
     this.loadProviders();
   }
@@ -846,17 +853,20 @@ export class PaymentReport implements OnInit {
           label: 'Editar',
           icon: 'pi pi-pencil',
           command: () => this.onEditPayment(payment)
-        },
-        {
-          separator: true
-        },
-        {
-          label: 'Eliminar',
-          icon: 'pi pi-trash',
-          styleClass: 'text-red-600',
-          command: () => this.onDeletePayment(payment)
         }
       );
+      // Solo roles que no son cajero pueden eliminar pagos
+      if (this.canEditPayments) {
+        items.push(
+          { separator: true },
+          {
+            label: 'Eliminar',
+            icon: 'pi pi-trash',
+            styleClass: 'text-red-600',
+            command: () => this.onDeletePayment(payment)
+          }
+        );
+      }
     }
 
     return items;

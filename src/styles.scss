@@ -100,3 +100,42 @@ body {
     width: 100%;
   }
 }
+
+/* Toast responsive: tamaño reducido en móvil/tablet */
+@media (max-width: 768px) {
+  .p-toast {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: 22rem;
+    left: 50% !important;
+    transform: translateX(-50%);
+    margin-left: 0 !important;
+  }
+
+  .p-toast-message {
+    margin-bottom: 0.5rem;
+    padding: 0.625rem 0.75rem !important;
+    min-height: auto !important;
+  }
+
+  .p-toast-message-content {
+    padding: 0 !important;
+    gap: 0.5rem;
+  }
+
+  .p-toast-close-button,
+  .p-toast-close-icon {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .p-toast .p-toast-message .p-toast-message-text .p-toast-summary,
+  .p-toast .p-toast-message .p-toast-message-text .p-toast-detail {
+    font-size: 0.8125rem !important;
+  }
+
+  .p-toast .p-toast-message .p-toast-message-icon {
+    font-size: 1rem !important;
+    width: 1.25rem !important;
+  }
+}

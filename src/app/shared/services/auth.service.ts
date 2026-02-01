@@ -13,6 +13,17 @@ export class AuthService {
   readonly currentUser = this._currentUser.asReadonly();
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
 
+  /** Normaliza el usuario de la API (puede venir con `rol`/`nombre`) a la forma del modelo (`role`/`name`) */
+  private normalizeUser(raw: any): User {
+    const roleObj = raw?.role ?? raw?.rol;
+    return {
+      id: raw?.id,
+      email: raw?.email ?? '',
+      name: raw?.name ?? raw?.nombre ?? '',
+      role: roleObj ? { id: roleObj.id, nombre: roleObj.nombre ?? '' } : { id: 0, nombre: '' }
+    };
+  }
+
   constructor(
     private apiService: ApiService,
     private router: Router
@@ -27,9 +38,10 @@ export class AuthService {
     return this.apiService.post<LoginResponse>('/auth/login', { email, password }).pipe(
       map(response => {
         if (response.success && response.data) {
-          const { token, user } = response.data;
+          const { token, user: rawUser } = response.data;
+          const user = this.normalizeUser(rawUser);
           
-          // Guardar token y usuario
+          // Guardar token y usuario (normalizado)
           localStorage.setItem('token', token);
           localStorage.setItem('user', JSON.stringify(user));
           
@@ -51,7 +63,7 @@ export class AuthService {
     return this.apiService.get<User>('/auth/me').pipe(
       map(response => {
         if (response.success && response.data) {
-          const user = response.data;
+          const user = this.normalizeUser(response.data);
           localStorage.setItem('user', JSON.stringify(user));
           this._currentUser.set(user);
           this._isAuthenticated.set(true);
@@ -82,7 +94,8 @@ export class AuthService {
     
     if (token && storedUser) {
       try {
-        const user = JSON.parse(storedUser) as User;
+        const raw = JSON.parse(storedUser);
+        const user = this.normalizeUser(raw);
         this._currentUser.set(user);
         this._isAuthenticated.set(true);
         
@@ -101,11 +114,15 @@ export class AuthService {
   }
 
   /**
-   * Verifica si el usuario tiene un rol específico
+   * Verifica si el usuario tiene un rol específico (comparación sin distinguir mayúsculas/minúsculas).
+   * Acepta tanto `role` como `rol` (API puede devolver el objeto en español).
    */
   hasRole(role: string): boolean {
     const user = this._currentUser();
-    return user?.role?.nombre === role;
+    const roleObj = user?.role;
+    const userRole = roleObj?.nombre?.trim();
+    if (!userRole || !role) return false;
+    return userRole.toUpperCase() === role.toUpperCase();
   }
 
   /**

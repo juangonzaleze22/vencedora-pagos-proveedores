@@ -266,7 +266,8 @@
         </app-app-card>
       </div>
 
-      <!-- Columna Derecha: Formulario de Pedido -->
+      <!-- Columna Derecha: Formulario de Pedido (oculto para cajeros) -->
+      @if (canEditProviderAndDebts) {
       <app-app-card class="mt-0 min-w-0 card-no-padding" styleClass="border-primary/20 dark:border-primary/30 relative">
         <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
         <div class="relative z-10 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50 flex flex-nowrap items-center justify-between gap-2 min-h-[3rem]">
@@ -353,6 +354,7 @@
         </form>
         </div>
       </app-app-card>
+      }
     </div>
     }
   </div>
