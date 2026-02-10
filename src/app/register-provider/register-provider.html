@@ -56,7 +56,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="phone">
-                Teléfono de Contacto
+                Teléfono de Contacto asd
               </label>
               <p-iconfield iconPosition="left" class="w-full">
                 <p-inputicon>
@@ -67,20 +67,35 @@
                   type="tel"
                   pInputText
                   formControlName="phone"
-                  placeholder="+58 412-1234567"
+                  placeholder="(000) 000-0000"
+                  mask="(000) 000-0000"
                   class="w-full" />
               </p-iconfield>
-              @if (providerForm.get('phone')?.invalid && providerForm.get('phone')?.touched) {
-                <small class="text-red-600">
-                  @if (providerForm.get('phone')?.errors?.['invalidPhone']) {
-                    {{ providerForm.get('phone')?.errors?.['message'] || 'El teléfono debe incluir código de área' }}
-                  }
-                </small>
-              }
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <i class="pi pi-info-circle mr-1"></i>
-                <strong>Importante:</strong> El teléfono debe incluir el código de país internacional (ej: +58, +32, +1, +34) seguido del número local. Ejemplos: +58 412-1234567, +32 22423144, +1 555-1234567
+                Formato: (+58) 0XXX XXX-XXXX. Listo para compartir por WhatsApp.
               </p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="email">
+                Correo electrónico
+              </label>
+              <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                  <i class="pi pi-envelope"></i>
+                </p-inputicon>
+                <input
+                  id="email"
+                  type="email"
+                  pInputText
+                  formControlName="email"
+                  placeholder="contacto&#64;empresa.com"
+                  class="w-full" />
+              </p-iconfield>
+              @if (providerForm.get('email')?.invalid && providerForm.get('email')?.touched) {
+                <small class="text-red-600">Ingrese un correo válido</small>
+              }
             </div>
           </div>
 

@@ -1,0 +1,29 @@
+:host ::ng-deep tr.row-shared-whatsapp td {
+  background-color: #f0fdf4 !important; // green-50
+}
+:host ::ng-deep tr.row-shared-whatsapp td:first-child {
+  border-left: 4px solid #22c55e; // green-500
+}
+:host-context(.dark) :host ::ng-deep tr.row-shared-whatsapp td,
+:host ::ng-deep .dark tr.row-shared-whatsapp td {
+  background-color: rgba(20, 83, 45, 0.2) !important;
+}
+:host-context(.dark) :host ::ng-deep tr.row-shared-whatsapp td:first-child,
+:host ::ng-deep .dark tr.row-shared-whatsapp td:first-child {
+  border-left-color: #22c55e;
+}
+
+:host ::ng-deep tr.row-deleted td {
+  background-color: rgba(254, 226, 226, 0.3) !important;
+}
+:host ::ng-deep tr.row-deleted td:first-child {
+  border-left: 4px solid #ef4444;
+}
+:host-context(.dark) :host ::ng-deep tr.row-deleted td,
+:host ::ng-deep .dark tr.row-deleted td {
+  background-color: rgba(127, 29, 29, 0.2) !important;
+}
+:host-context(.dark) :host ::ng-deep tr.row-deleted td:first-child,
+:host ::ng-deep .dark tr.row-deleted td:first-child {
+  border-left-color: #ef4444;
+}

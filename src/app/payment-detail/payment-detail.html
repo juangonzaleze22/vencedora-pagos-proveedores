@@ -28,8 +28,23 @@
             <!-- Left: Información del Pago -->
             <div class="flex-1">
               <div class="mb-4">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Comprobante de Pago</h1>
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Comprobante de Pago</h1>
+                  @if (paymentData.shared) {
+                    <span
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-800/50 dark:text-green-200 border border-green-200 dark:border-green-700"
+                      title="Este pago fue compartido por WhatsApp">
+                      <i class="pi pi-whatsapp text-base"></i>
+                      Compartido por WhatsApp
+                    </span>
+                  }
+                </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Pago #{{ paymentData.id }}</p>
+                @if (paymentData.shared && paymentData.sharedAt) {
+                  <p class="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Compartido el {{ formatDateTimeSpanish(paymentData.sharedAt) }}
+                  </p>
+                }
               </div>
               <div class="space-y-1 text-sm">
                 <p class="text-gray-600 dark:text-gray-400">

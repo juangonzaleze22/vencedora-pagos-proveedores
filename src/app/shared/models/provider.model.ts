@@ -5,6 +5,7 @@ export interface Provider {
   companyName: string;
   taxId?: string;
   phone?: string;
+  email?: string;
   status: 'PENDING' | 'COMPLETED';
   totalDebt: number;
   lastPaymentDate?: Date;
@@ -55,6 +56,7 @@ export function mapProviderFromAPI(apiProvider: any): Provider {
     companyName: apiProvider.companyName,
     taxId: apiProvider.taxId,
     phone: apiProvider.phone || apiProvider.phoneNumber, // Mantener compatibilidad temporal
+    email: apiProvider.email,
     status: apiProvider.status,
     totalDebt: apiProvider.totalDebt,
     lastPaymentDate: apiProvider.lastPaymentDate ? new Date(apiProvider.lastPaymentDate) : undefined,
@@ -69,6 +71,7 @@ export function mapProviderToAPI(provider: Partial<Provider>): any {
     companyName: provider.companyName,
     taxId: provider.taxId,
     phone: provider.phone,
+    email: provider.email,
     status: provider.status,
     ...(provider.totalDebt !== undefined && { initialDebtAmount: provider.totalDebt }),
     ...(provider.lastPaymentDate && { debtDate: provider.lastPaymentDate.toISOString().split('T')[0] })

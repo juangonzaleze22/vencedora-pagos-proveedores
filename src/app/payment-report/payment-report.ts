@@ -23,6 +23,7 @@ import { MessageService } from 'primeng/api';
 import { LazyImage } from '../shared/components/ui/lazy-image/lazy-image';
 import { ConfirmDialog } from '../shared/components/ui/confirm-dialog/confirm-dialog';
 import { OrderDetailDialog } from '../shared/components/ui/order-detail-dialog/order-detail-dialog';
+import { PaymentList } from '../shared/components/data/payment-list/payment-list';
 import { ReportService } from '../shared/services/report.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { PaymentService } from '../shared/services/payment.service';
@@ -55,7 +56,8 @@ import { Provider } from '../shared/models/provider.model';
     ToggleSwitchModule,
     LazyImage,
     ConfirmDialog,
-    OrderDetailDialog
+    OrderDetailDialog,
+    PaymentList
   ],
   providers: [MessageService],
   templateUrl: './payment-report.html',
@@ -556,8 +558,6 @@ export class PaymentReport implements OnInit {
    */
   getActivePaymentsCount(debt: any): number {
 
-    console.log('debt', debt);
-
     if (!debt.payments || !Array.isArray(debt.payments)) {
       return 0;
     }
@@ -832,7 +832,10 @@ export class PaymentReport implements OnInit {
     this.location.back();
   }
 
-  getPaymentMenuItems(payment: Payment): MenuItem[] {
+  /** Referencia ligada al componente para que los command del menú tengan el this correcto */
+  readonly getPaymentMenuItems = (payment: Payment): MenuItem[] => this.buildPaymentMenuItems(payment);
+
+  private buildPaymentMenuItems(payment: Payment): MenuItem[] {
     const items: MenuItem[] = [
       {
         label: 'Ver Detalle',

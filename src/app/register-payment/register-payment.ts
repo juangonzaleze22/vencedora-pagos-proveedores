@@ -233,6 +233,7 @@ export class RegisterPayment implements OnInit {
   private loadProviders(callback?: () => void) {
     this.supplierService.list().subscribe({
       next: (response) => {
+        console.log('Providers loaded:', response.data);
         if (response.success && response.data) {
           this.providers.set(response.data);
           if (callback) {
@@ -251,8 +252,10 @@ export class RegisterPayment implements OnInit {
 
   onProviderChange(provider: Provider | null) {
     if (provider) {
+      // Cargar el email del proveedor (distribuidor) en correo del emisor
+      this.paymentForm.patchValue({ correoEmisor: provider.email ?? '' });
       // Limpiar la deuda seleccionada al cambiar de proveedor
-      this.paymentForm.patchValue({ 
+      this.paymentForm.patchValue({
         proveedorId: provider.id,
         debtId: null // Limpiar la deuda seleccionada
       });
@@ -265,8 +268,9 @@ export class RegisterPayment implements OnInit {
       // Actualizar validación del monto
       this.paymentForm.get('monto')?.updateValueAndValidity();
     } else {
+      this.paymentForm.patchValue({ correoEmisor: '' });
       // Si se limpia el proveedor, también limpiar deuda y monto
-      this.paymentForm.patchValue({ 
+      this.paymentForm.patchValue({
         proveedorId: null,
         debtId: null,
         monto: ''
@@ -444,19 +448,17 @@ export class RegisterPayment implements OnInit {
         error: (error) => {
           this.loading.set(false);
           console.error(`Error al ${this.isEditMode() ? 'actualizar' : 'registrar'} pago:`, error);
-          
+
           // Extraer información del error de la API
           let message = error.message || `Error al ${this.isEditMode() ? 'actualizar' : 'registrar'} el pago`;
           let errors: any[] = [];
-          
+
           if (error.response) {
-            // Si hay una respuesta estructurada de la API
             message = error.response.message || message;
             if (error.response.errors && Array.isArray(error.response.errors)) {
               errors = error.response.errors;
             }
           } else if (error.error) {
-            // Si el error viene en error.error
             if (error.error.message) {
               message = error.error.message;
             }
@@ -464,8 +466,21 @@ export class RegisterPayment implements OnInit {
               errors = error.error.errors;
             }
           }
-          
-          // Mostrar modal de error
+
+          // Validación de número de confirmación duplicado (400 / mensaje de la API)
+          const msg = message?.toLowerCase() ?? '';
+          const isDuplicateConfirmation =
+            (msg.includes('número de confirmación') || msg.includes('numero de confirmacion')) &&
+            (msg.includes('ya existe') || msg.includes('duplicad'));
+
+          if (isDuplicateConfirmation) {
+            const numeroConfirmacionControl = this.paymentForm.get('numeroConfirmacion');
+            numeroConfirmacionControl?.setErrors({ confirmationNumberDuplicate: { message } });
+            numeroConfirmacionControl?.markAsTouched();
+            return;
+          }
+
+          // Mostrar modal de error para el resto de errores
           this.messageData.set({
             success: false,
             message: message,

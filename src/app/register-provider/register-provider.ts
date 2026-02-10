@@ -50,6 +50,10 @@ export class RegisterProvider implements OnInit {
   pageSubtitle = signal<string>('Ingrese la información del nuevo proveedor y sus deudas pendientes');
   providerId = signal<number | null>(null);
 
+  /** Máscara de teléfono venezolano: (+58) 0XXX XXX-XXXX */
+  readonly PHONE_MASK_PREFIX = '(+58) ';
+  readonly PHONE_EMPTY = '(+58) ';
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -62,7 +66,8 @@ export class RegisterProvider implements OnInit {
     this.providerForm = this.fb.group({
       nombre: ['', [Validators.required]],
       rif: ['', []],
-      phone: ['', [this.phoneValidator]],
+      phone: [this.PHONE_EMPTY, [this.phoneValidator.bind(this)]],
+      email: ['', [Validators.email]],
       deudaInicial: ['', [Validators.min(0.01)]],
       fechaDeuda: ['', []],
       diasCredito: [30, [Validators.min(0)]]
@@ -71,6 +76,21 @@ export class RegisterProvider implements OnInit {
     // Calcular fecha de vencimiento cuando cambien fecha deuda o días de crédito
     this.providerForm.get('fechaDeuda')?.valueChanges.subscribe(() => this.calculateDueDate());
     this.providerForm.get('diasCredito')?.valueChanges.subscribe(() => this.calculateDueDate());
+  }
+
+  /**
+   * Aplica la máscara (+58) 0XXX XXX-XXXX. Solo dígitos tras el prefijo (máx. 11).
+   */
+  
+
+
+  /** Valor con máscara para mostrar; si solo está el prefijo se considera vacío. */
+  private getPhoneForPayload(phoneValue: string | null | undefined): string | null {
+    const raw = (phoneValue ?? '').replace(/\D/g, '').replace(/^58/, '');
+    if (raw.length === 0) return null;
+    const digits = raw[0] === '0' ? raw.slice(1) : raw;
+    if (digits.length < 10) return null;
+    return '+58' + digits.slice(0, 10);
   }
 
   ngOnInit() {
@@ -125,39 +145,14 @@ export class RegisterProvider implements OnInit {
     this.providerForm.patchValue({
       nombre: provider.companyName,
       rif: provider.taxId || '',
-      phone: provider.phone || ''
+      phone : provider.phone || '',
+      email: provider.email || ''
     });
   }
 
-  /**
-   * Validador personalizado para teléfono que requiere código de país internacional
-   * Valida que el teléfono incluya código de país (cualquier código internacional)
-   */
-  phoneValidator(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    
-    // Si el campo está vacío, es válido (campo opcional)
-    if (!value || value.trim() === '') {
-      return null;
-    }
 
-    // Remover espacios, guiones y paréntesis para validación
-    const cleanPhone = value.replace(/\s+/g, '').replace(/[-()]/g, '');
-    
-    // Validar que tenga código de país internacional (+ seguido de 1-4 dígitos)
-    // y luego al menos 6 dígitos más para el número local
-    // Acepta formatos como: +584121234567, +58 412-1234567, +3222423144, +1 5551234567
-    // Debe tener: + (código de país de 1-4 dígitos) + número local (mínimo 6 dígitos)
-    // Longitud total mínima: 8 dígitos después del +, máxima recomendada: 15 dígitos
-    const phonePattern = /^\+\d{1,4}\d{6,12}$/;
-    
-    if (!phonePattern.test(cleanPhone)) {
-      return { 
-        invalidPhone: true,
-        message: 'El teléfono debe incluir código de país internacional (ej: +58, +32, +1) seguido del número local'
-      };
-    }
-
+  /** Validador de teléfono: opcional; la máscara se encarga del formato. */
+  phoneValidator(_control: AbstractControl): ValidationErrors | null {
     return null;
   }
 
@@ -198,8 +193,9 @@ export class RegisterProvider implements OnInit {
         // taxId es opcional - incluir si tiene valor, o null si se borró
         payload.taxId = formValue.rif && formValue.rif.trim() !== '' ? formValue.rif : null;
         
-        // phone es opcional - incluir si tiene valor, o null si se borró (para limpiar)
-        payload.phone = formValue.phone && formValue.phone.trim() !== '' ? formValue.phone : null;
+        // phone es opcional - incluir si tiene más que solo +58, o null si se borró
+        payload.phone = this.getPhoneForPayload(formValue.phone);
+        payload.email = formValue.email && formValue.email.trim() !== '' ? formValue.email.trim() : null;
       } else {
         // En modo creación, usar la lógica original
         payload.companyName = formValue.nombre;
@@ -208,8 +204,9 @@ export class RegisterProvider implements OnInit {
           payload.taxId = formValue.rif;
         }
 
-        if (formValue.phone) {
-          payload.phone = formValue.phone;
+        payload.phone = this.getPhoneForPayload(formValue.phone);
+        if (formValue.email && formValue.email.trim() !== '') {
+          payload.email = formValue.email.trim();
         }
 
         // Si se proporciona deuda inicial, incluirla (solo en modo creación)
@@ -240,7 +237,8 @@ export class RegisterProvider implements OnInit {
             this.providerForm.reset({
               nombre: '',
               rif: '',
-              phone: '',
+              phone: this.PHONE_EMPTY,
+              email: '',
               deudaInicial: '',
               fechaDeuda: '',
               diasCredito: 30

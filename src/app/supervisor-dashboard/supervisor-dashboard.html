@@ -16,7 +16,9 @@
         label="Pagos Procesados"
         [value]="statsValue.processedPayments"
         icon="pi pi-check-circle"
-        iconColor="green" />
+        iconColor="green"
+        [clickable]="true"
+        (cardClick)="openProcessedPaymentsModal()" />
       
       <app-stat-card
         label="Total Proveedores"
@@ -83,3 +85,117 @@
     </div>
   </div>
 </app-page-container>
+
+<!-- Modal: Pagos Procesados - Proveedores y tabla de pagos -->
+<p-dialog
+  header="Pagos Procesados"
+  [visible]="showProcessedPaymentsModal()"
+  (visibleChange)="showProcessedPaymentsModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '95vw', maxWidth: '960px' }"
+  [contentStyle]="{ overflow: 'auto', maxHeight: '85vh' }"
+  (onHide)="closeProcessedPaymentsModal()">
+  
+  @if (!selectedModalProviderId()) {
+    <!-- Paso 1: Grilla de proveedores -->
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+      Seleccione un proveedor para ver los pagos procesados.
+    </p>
+    @if (modalLoadingProviders()) {
+      <div class="flex justify-center py-12">
+        <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+      </div>
+    } @else if (modalProviders().length === 0) {
+      <p class="text-center py-8 text-gray-500 dark:text-gray-400">
+        No hay proveedores registrados.
+      </p>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        @for (provider of modalProviders(); track provider.id) {
+          <button
+            type="button"
+            class="text-left p-4 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-zinc-800 hover:border-primary hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            (click)="onSelectProviderInModal(provider)">
+            <div class="flex items-center gap-3">
+              <div class="p-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                <i class="pi pi-building text-xl"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-900 dark:text-white truncate">{{ provider.companyName }}</p>
+                @if (provider.taxId) {
+                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ provider.taxId }}</p>
+                }
+              </div>
+              <i class="pi pi-chevron-right text-gray-400 shrink-0"></i>
+            </div>
+          </button>
+        }
+      </div>
+    }
+  } @else {
+    <!-- Paso 2: Proveedor seleccionado + selector de deuda + tabla de pagos -->
+    <div class="space-y-4 min-h-[380px]">
+      <div class="flex flex-wrap items-center gap-3">
+        <p-button
+          icon="pi pi-arrow-left"
+          label="Cambiar proveedor"
+          [text]="true"
+          severity="secondary"
+          size="small"
+          (onClick)="backToProviderGrid()" />
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {{ modalSelectedProvider()?.companyName }}
+        </span>
+      </div>
+
+      @if (modalLoadingReport()) {
+        <div class="flex justify-center py-8">
+          <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
+        </div>
+      } @else {
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Deuda:</label>
+            <p-select
+              [options]="modalDebtOptions()"
+              optionLabel="label"
+              optionValue="id"
+              [ngModel]="modalSelectedDebtId()"
+              (ngModelChange)="onModalDebtChange($event)"
+              placeholder="Seleccione una deuda"
+              styleClass="min-w-[180px]" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Fecha:</label>
+            <p-select
+              [options]="modalDateFilterOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="modalPaymentsDateFilter()"
+              (ngModelChange)="onModalDateFilterChange($event)"
+              styleClass="min-w-[160px]" />
+          </div>
+        </div>
+
+        <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+          <app-payment-list
+            [payments]="modalDisplayedPayments()"
+            [loading]="modalLoadingPayments()"
+            emptyMessage="No hay pagos registrados para esta deuda"
+            [viewOnly]="true"
+            (viewDetail)="onViewPaymentDetailInModal($event)" />
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cerrar"
+      severity="secondary"
+      icon="pi pi-times"
+      (onClick)="closeProcessedPaymentsModal()" />
+  </ng-template>
+</p-dialog>

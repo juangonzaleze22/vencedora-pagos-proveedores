@@ -63,6 +63,7 @@ export class SupplierService {
     companyName: string;
     taxId?: string;
     phone?: string;
+    email?: string;
     initialDebtAmount?: number;
     debtDate?: string;
     creditDays?: number;
@@ -85,6 +86,7 @@ export class SupplierService {
     companyName: string;
     taxId: string;
     phone: string;
+    email: string;
   }>): Observable<Provider> {
     return this.apiService.put<Provider>(`/suppliers/${id}`, data).pipe(
       map(response => {
