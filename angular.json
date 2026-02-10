@@ -68,7 +68,7 @@
                 }
               ],
               "outputPath": {
-                "base": "dist/hostinger",
+                "base": "dist",
                 "browser": ""
               },
               "budgets": [
