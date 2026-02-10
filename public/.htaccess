@@ -1,0 +1,7 @@
+# Hostinger / Apache: SPA Angular - redirigir todas las rutas a index.html
+RewriteEngine On
+RewriteBase /
+# Si el archivo o directorio solicitado no existe, sirve index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
