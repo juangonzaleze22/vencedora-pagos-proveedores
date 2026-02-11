@@ -106,8 +106,7 @@ export class AuthService {
             this.logout();
           }
         });
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
+      } catch {
         this.logout();
       }
     }

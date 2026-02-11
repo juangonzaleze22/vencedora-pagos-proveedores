@@ -123,8 +123,7 @@ export class SupervisorDashboard {
         this._stats.set(data);
         this._loading.set(false);
       },
-      error: (error) => {
-        console.error('Error loading dashboard:', error);
+      error: () => {
         this._loading.set(false);
       }
     });

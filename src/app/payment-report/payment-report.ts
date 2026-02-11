@@ -234,9 +234,7 @@ export class PaymentReport implements OnInit {
           this.providers.set(response.data);
         }
       },
-      error: (error) => {
-        console.error('Error loading providers:', error);
-      }
+      error: () => {}
     });
   }
 
@@ -509,9 +507,7 @@ export class PaymentReport implements OnInit {
     }
 
     this.reportService.exportReport(providerId).subscribe({
-      next: (data) => {
-        // Por ahora solo muestra en consola, en el futuro descargará el archivo
-        console.log('Export data:', data);
+      next: () => {
         this.messageService.add({
           severity: 'info',
           summary: 'Exportar',
@@ -681,38 +677,22 @@ export class PaymentReport implements OnInit {
         this.showConfirmDialog.set(false);
       },
       error: (error: any) => {
-        console.error('Error completo al eliminar pago:', error);
-        console.error('Error.error:', error?.error);
-        console.error('Error.message:', error?.message);
-        
         // Extraer mensaje de error de diferentes formatos posibles
         let errorMessage = 'Error al eliminar el pago';
         
-        // Primero intentar obtener el mensaje de la respuesta de la API
         if (error?.error) {
-          // Si error.error es un objeto con message (respuesta de API)
           if (error.error.message) {
             errorMessage = error.error.message;
-          } 
-          // Si error.error es un string (algunos casos)
-          else if (typeof error.error === 'string') {
+          } else if (typeof error.error === 'string') {
             errorMessage = error.error;
-          }
-          // Si error.error tiene errors array
-          else if (error.error.errors && Array.isArray(error.error.errors) && error.error.errors.length > 0) {
+          } else if (error.error.errors && Array.isArray(error.error.errors) && error.error.errors.length > 0) {
             errorMessage = error.error.errors.map((e: any) => e.msg || e.message || e).join(', ');
           }
-        }
-        // Si no, intentar error.message
-        else if (error?.message) {
+        } else if (error?.message) {
           errorMessage = error.message;
-        }
-        // Si es un string directo
-        else if (typeof error === 'string') {
+        } else if (typeof error === 'string') {
           errorMessage = error;
         }
-        
-        console.error('Mensaje de error extraído:', errorMessage);
         
         // Mostrar el toast de error
         this.messageService.add({
@@ -766,7 +746,6 @@ export class PaymentReport implements OnInit {
         });
       },
       error: (error: any) => {
-        console.error('Error al compartir pago:', error);
         const errorMessage = error?.error?.message || error?.message || 'Error al compartir el pago';
         this.messageService.add({
           severity: 'error',
@@ -847,9 +826,8 @@ export class PaymentReport implements OnInit {
     if (!payment.deleted) {
       items.push(
         {
-          label: payment.shared ? 'Ya compartido' : 'Compartir por WhatsApp',
+          label: 'Compartir por WhatsApp',
           icon: 'pi pi-share-alt',
-          disabled: payment.shared,
           command: () => this.onSharePayment(payment)
         },
         {

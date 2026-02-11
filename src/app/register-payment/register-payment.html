@@ -17,7 +17,7 @@
         <!-- Columna izquierda: Campos del formulario -->
         <div class="lg:col-span-2 space-y-6">
           
-          <!-- Nombre del Emisor y Correo -->
+          <!-- Nombre del Emisor y Nº de Confirmación -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="emisor">
@@ -40,69 +40,39 @@
               }
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="correoEmisor">
-                Correo del Emisor (Distribuidor) <span class="text-red-500">*</span>
-              </label>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                Se completa al seleccionar un proveedor.
-              </p>
-              <p-iconfield iconPosition="left" class="w-full">
-                <p-inputicon>
-                  <i class="pi pi-envelope"></i>
-                </p-inputicon>
-                <input
-                  id="correoEmisor"
-                  type="email"
-                  pInputText
-                  formControlName="correoEmisor"
-                  placeholder="Seleccione un proveedor"
-                  class="w-full"
-                  readonly />
-              </p-iconfield>
-              @if (paymentForm.get('correoEmisor')?.invalid && paymentForm.get('correoEmisor')?.touched) {
-                @if (paymentForm.get('correoEmisor')?.errors?.['required']) {
-                  <small class="text-red-600">El correo es requerido</small>
-                } @else if (paymentForm.get('correoEmisor')?.errors?.['email']) {
-                  <small class="text-red-600">El correo no es válido</small>
+            @if (paymentForm.get('metodoPago')?.value !== 'Efectivo') {
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="confirmation">
+                  Nº de Confirmación <span class="text-red-500">*</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">(Últimos 5 dígitos)</span>
+                </label>
+                <p-iconfield iconPosition="left" class="w-full">
+                  <p-inputicon>
+                    <i class="pi pi-hashtag"></i>
+                  </p-inputicon>
+                  <input
+                    id="confirmation"
+                    type="text"
+                    pInputText
+                    formControlName="numeroConfirmacion"
+                    placeholder="XXXXX"
+                    maxlength="5"
+                    class="w-full font-mono tracking-wider" />
+                </p-iconfield>
+                @if (paymentForm.get('numeroConfirmacion')?.invalid && paymentForm.get('numeroConfirmacion')?.touched) {
+                  @if (paymentForm.get('numeroConfirmacion')?.errors?.['confirmationNumberDuplicate']) {
+                    <small class="text-red-600">
+                      {{ paymentForm.get('numeroConfirmacion')?.errors?.['confirmationNumberDuplicate']?.message || 'Ya existe un pago con este número de confirmación' }}
+                    </small>
+                  } @else if (paymentForm.get('numeroConfirmacion')?.errors?.['required']) {
+                    <small class="text-red-600">El número de confirmación es requerido</small>
+                  } @else {
+                    <small class="text-red-600">Debe tener exactamente 5 dígitos</small>
+                  }
                 }
-              }
-            </div>
+              </div>
+            }
           </div>
-
-          <!-- Número de Confirmación (solo si no es Efectivo) -->
-          @if (paymentForm.get('metodoPago')?.value !== 'Efectivo') {
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="confirmation">
-                Nº de Confirmación <span class="text-red-500">*</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">(Últimos 5 dígitos)</span>
-              </label>
-              <p-iconfield iconPosition="left" class="w-full">
-                <p-inputicon>
-                  <i class="pi pi-hashtag"></i>
-                </p-inputicon>
-                <input
-                  id="confirmation"
-                  type="text"
-                  pInputText
-                  formControlName="numeroConfirmacion"
-                  placeholder="XXXXX"
-                  maxlength="5"
-                  class="w-full font-mono tracking-wider" />
-              </p-iconfield>
-              @if (paymentForm.get('numeroConfirmacion')?.invalid && paymentForm.get('numeroConfirmacion')?.touched) {
-                @if (paymentForm.get('numeroConfirmacion')?.errors?.['confirmationNumberDuplicate']) {
-                  <small class="text-red-600">
-                    {{ paymentForm.get('numeroConfirmacion')?.errors?.['confirmationNumberDuplicate']?.message || 'Ya existe un pago con este número de confirmación' }}
-                  </small>
-                } @else if (paymentForm.get('numeroConfirmacion')?.errors?.['required']) {
-                  <small class="text-red-600">El número de confirmación es requerido</small>
-                } @else {
-                  <small class="text-red-600">Debe tener exactamente 5 dígitos</small>
-                }
-              }
-            </div>
-          }
 
           <!-- Fecha de Envío y Proveedor -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,6 +105,36 @@
                 <small class="text-red-600">Debe seleccionar un proveedor</small>
               }
             </div>
+          </div>
+
+          <!-- Correo distribuidor (Zelle) - se completa al seleccionar proveedor -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="correoEmisor">
+              Correo distribuidor (Zelle) <span class="text-red-500">*</span>
+            </label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Se completa al seleccionar un proveedor.
+            </p>
+            <p-iconfield iconPosition="left" class="w-full">
+              <p-inputicon>
+                <i class="pi pi-envelope"></i>
+              </p-inputicon>
+              <input
+                id="correoEmisor"
+                type="email"
+                pInputText
+                formControlName="correoEmisor"
+                placeholder="Seleccione un proveedor"
+                class="w-full"
+                readonly />
+            </p-iconfield>
+            @if (paymentForm.get('correoEmisor')?.invalid && paymentForm.get('correoEmisor')?.touched) {
+              @if (paymentForm.get('correoEmisor')?.errors?.['required']) {
+                <small class="text-red-600">El correo es requerido</small>
+              } @else if (paymentForm.get('correoEmisor')?.errors?.['email']) {
+                <small class="text-red-600">El correo no es válido</small>
+              }
+            }
           </div>
 
           <!-- Método de Pago y Moneda -->

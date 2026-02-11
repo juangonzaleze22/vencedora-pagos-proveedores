@@ -71,8 +71,7 @@ export class SupplierList implements OnInit {
         this.searchLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error en búsqueda de distribuidores:', error);
+      error: () => {
         this.supplierSuggestions = [];
         this.searchLoading = false;
         this.cdr.detectChanges();
@@ -99,8 +98,7 @@ export class SupplierList implements OnInit {
           detail: 'Información cargada exitosamente'
         });
       },
-      error: (error) => {
-        console.error('Error al obtener detalles del distribuidor:', error);
+      error: () => {
         // Usar el supplier básico si falla la petición completa
         this.selectedSupplier.set(supplier);
         this.cdr.detectChanges();

@@ -64,18 +64,11 @@ export class FileUploadComponent implements OnChanges {
   }
 
   onFileSelect(event: any) {
-    console.log('FileUpload onFileSelect event:', event);
     const files: File[] = event.files;
-    console.log('Files extracted from event:', files);
-    
+
     if (files && files.length > 0) {
       const file = files[0];
-      console.log('Processing file:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      });
-      
+
       // Guardar el archivo directamente
       this.selectedFile.set(file);
       // Cuando se selecciona un nuevo archivo, ya no hay imagen existente
@@ -96,12 +89,8 @@ export class FileUploadComponent implements OnChanges {
         this.isImage.set(false);
         this.previewUrl.set(null);
       }
-      
-      console.log('Emitting fileSelect event with files:', files);
-      // Emitir el array de archivos
+
       this.fileSelect.emit([...files]);
-    } else {
-      console.warn('No files found in event');
     }
   }
 

@@ -151,9 +151,8 @@ export class RegisterPayment implements OnInit {
           this.populateFormWithPayment(payment);
         }
       },
-      error: (error) => {
+      error: () => {
         this.loading.set(false);
-        console.error('Error loading payment for edit:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -233,7 +232,6 @@ export class RegisterPayment implements OnInit {
   private loadProviders(callback?: () => void) {
     this.supplierService.list().subscribe({
       next: (response) => {
-        console.log('Providers loaded:', response.data);
         if (response.success && response.data) {
           this.providers.set(response.data);
           if (callback) {
@@ -241,8 +239,7 @@ export class RegisterPayment implements OnInit {
           }
         }
       },
-      error: (error) => {
-        console.error('Error loading providers:', error);
+      error: (_error) => {
         if (callback) {
           callback();
         }
@@ -296,8 +293,7 @@ export class RegisterPayment implements OnInit {
           }
         }
       },
-      error: (error) => {
-        console.error('Error loading debts:', error);
+      error: (_error) => {
         if (callback) {
           callback();
         }
@@ -308,13 +304,10 @@ export class RegisterPayment implements OnInit {
   @ViewChild('fileUpload') fileUploadComponent?: FileUploadComponent;
 
   onFileSelect(files: File[]) {
-    console.log('onFileSelect called with files:', files);
     if (files && files.length > 0) {
       this.selectedFiles = files;
-      console.log('File stored:', this.selectedFiles[0]?.name, 'Size:', this.selectedFiles[0]?.size);
     } else {
       this.selectedFiles = [];
-      console.log('No files received, clearing selectedFiles');
     }
   }
 
@@ -359,23 +352,9 @@ export class RegisterPayment implements OnInit {
       let removeReceipt: boolean | undefined = undefined;
       
       if (this.selectedFiles.length > 0 && this.selectedFiles[0] instanceof File) {
-        // Nuevo archivo seleccionado
         receiptFile = this.selectedFiles[0];
-        console.log('Submitting payment with new receipt file:', {
-          name: receiptFile.name,
-          size: receiptFile.size,
-          type: receiptFile.type
-        });
       } else if (this.existingReceiptUrl() && this.fileUploadComponent?.imageExplicitlyRemoved?.()) {
-        // Imagen existente fue eliminada explícitamente
         removeReceipt = true;
-        console.log('Submitting payment with removeReceipt flag to delete existing image');
-      } else if (this.existingReceiptUrl()) {
-        // Hay imagen existente y no se tocó
-        console.log('Not sending receipt or removeReceipt (keeping existing image)');
-      } else {
-        // No hay imagen existente ni archivo seleccionado
-        console.log('No receipt to send');
       }
       
       const paymentData: any = {
@@ -447,7 +426,6 @@ export class RegisterPayment implements OnInit {
         },
         error: (error) => {
           this.loading.set(false);
-          console.error(`Error al ${this.isEditMode() ? 'actualizar' : 'registrar'} pago:`, error);
 
           // Extraer información del error de la API
           let message = error.message || `Error al ${this.isEditMode() ? 'actualizar' : 'registrar'} el pago`;

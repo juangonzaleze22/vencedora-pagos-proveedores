@@ -190,8 +190,7 @@ export class ApiService {
         errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
       }
     }
-    
-    console.error('API Error:', errorMessage, error);
+
     return throwError(() => new Error(errorMessage));
   };
 }

@@ -41,10 +41,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         localStorage.removeItem('user');
         router.navigate(['/login']);
       } else if (error.status === 403) {
-        // Sin permisos
-        console.error('Acceso denegado:', error.error?.message || 'No tienes permisos para realizar esta acción');
+        // Sin permisos (el usuario ya fue redirigido o verá el mensaje en la UI)
       }
-      
+
       return throwError(() => error);
     })
   );

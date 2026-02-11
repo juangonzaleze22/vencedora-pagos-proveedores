@@ -145,8 +145,7 @@ export class LocateProvider {
         this.searchLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error en búsqueda de distribuidores:', error);
+      error: () => {
         this.supplierSuggestions = [];
         this.searchLoading = false;
         this.cdr.detectChanges();
@@ -172,8 +171,7 @@ export class LocateProvider {
         this.searchLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error al cargar proveedores:', error);
+      error: () => {
         this.supplierSuggestions = [];
         this.searchLoading = false;
         this.cdr.detectChanges();
@@ -205,8 +203,7 @@ export class LocateProvider {
           detail: `Se encontró: ${report.supplier.companyName}`
         });
       },
-      error: (error) => {
-        console.error('Error al obtener detalles del distribuidor:', error);
+      error: () => {
         // Usar el supplier básico si falla la petición completa
         this.selectedProvider.set(supplier);
         this.debts.set([]);
@@ -352,8 +349,7 @@ export class LocateProvider {
         this.calculateDueDate();
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error al cargar pedido para editar:', error);
+      error: () => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -470,7 +466,6 @@ export class LocateProvider {
         },
         error: (error) => {
           this.loading.set(false);
-          console.error('Error al actualizar pedido:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -495,7 +490,6 @@ export class LocateProvider {
         },
         error: (error) => {
           this.loading.set(false);
-          console.error('Error al agregar pedido:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

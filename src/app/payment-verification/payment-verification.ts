@@ -98,8 +98,7 @@ export class PaymentVerification implements OnDestroy {
         this.searchLoading = false;
         this.cdr.detectChanges(); // Actualización inmediata
       },
-      error: (error) => {
-        console.error('Error en búsqueda de pagos:', error);
+      error: () => {
         this.paymentSuggestions = [];
         this.searchLoading = false;
         this.cdr.detectChanges(); // Actualización inmediata

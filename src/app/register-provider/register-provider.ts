@@ -127,9 +127,8 @@ export class RegisterProvider implements OnInit {
         this.loading.set(false);
         this.populateFormWithProvider(provider);
       },
-      error: (error) => {
+      error: () => {
         this.loading.set(false);
-        console.error('Error loading provider for edit:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -269,8 +268,7 @@ export class RegisterProvider implements OnInit {
         },
         error: (error) => {
           this.loading.set(false);
-          console.error(`Error al ${isEdit ? 'actualizar' : 'registrar'} proveedor:`, error);
-          
+
           // Extraer información del error de la API
           let message = error.message || `Error al ${isEdit ? 'actualizar' : 'registrar'} el proveedor`;
           let errors: any[] = [];

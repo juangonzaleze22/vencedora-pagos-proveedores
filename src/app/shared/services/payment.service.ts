@@ -69,44 +69,8 @@ export class PaymentService {
       }
     }
     
-    if (data.receipt) {
-      // Asegurarse de que el archivo sea válido
-      if (data.receipt instanceof File) {
-        formData.append('receipt', data.receipt, data.receipt.name);
-        console.log('Receipt file added to FormData:', {
-          name: data.receipt.name,
-          size: data.receipt.size,
-          type: data.receipt.type
-        });
-      } else {
-        console.error('Receipt is not a valid File object:', data.receipt);
-      }
-    } else {
-      console.log('No receipt file provided');
-    }
-
-    // Debug: Log del FormData (sin el archivo)
-    console.log('FormData contents:', {
-      debtId: data.debtId,
-      supplierId: data.supplierId,
-      amount: data.amount,
-      paymentMethod: paymentMethodAPI,
-      senderName: data.senderName,
-      paymentDate: dateStr,
-      confirmationNumber: data.confirmationNumber,
-      isBolivares: data.isBolivares ?? false,
-      exchangeRate: data.exchangeRate,
-      amountInBolivares: data.amountInBolivares,
-      hasReceipt: !!data.receipt
-    });
-    
-    // Verificar que el archivo esté en el FormData
-    if (data.receipt) {
-      const receiptInFormData = formData.get('receipt');
-      console.log('Receipt in FormData:', receiptInFormData ? {
-        name: (receiptInFormData as File).name,
-        size: (receiptInFormData as File).size
-      } : 'NOT FOUND');
+    if (data.receipt && data.receipt instanceof File) {
+      formData.append('receipt', data.receipt, data.receipt.name);
     }
 
     return this.apiService.postFormData<Payment>('/payments', formData).pipe(
@@ -120,7 +84,6 @@ export class PaymentService {
         throw error;
       }),
       catchError((error) => {
-        console.error('Error creating payment:', error);
         // Si el error tiene la estructura de respuesta de la API, preservarla
         if (error.response) {
           return throwError(() => error);
@@ -219,8 +182,7 @@ export class PaymentService {
         }
         return [];
       }),
-      catchError((error) => {
-        console.error('Error searching payments by confirmation:', error);
+      catchError(() => {
         return of([]);
       })
     );
@@ -298,20 +260,11 @@ export class PaymentService {
       }
     }
     
-    // Si se quiere remover la imagen existente
     if (data.removeReceipt === true) {
       formData.append('removeReceipt', 'true');
-      console.log('Flag set to remove existing receipt');
     }
-    
-    // Si hay un archivo nuevo seleccionado
-    if (data.receipt) {
-      if (data.receipt instanceof File) {
-        formData.append('receipt', data.receipt, data.receipt.name);
-        console.log('Sending new receipt file:', data.receipt.name);
-      } else {
-        console.error('Receipt is not a valid File object:', data.receipt);
-      }
+    if (data.receipt && data.receipt instanceof File) {
+      formData.append('receipt', data.receipt, data.receipt.name);
     }
     
     // Si no se envía ni removeReceipt ni receipt, mantiene la imagen actual
@@ -327,7 +280,6 @@ export class PaymentService {
         throw error;
       }),
       catchError((error) => {
-        console.error('Error updating payment:', error);
         // Si el error tiene la estructura de respuesta de la API, preservarla
         if (error.response) {
           return throwError(() => error);
@@ -367,7 +319,6 @@ export class PaymentService {
         throw new Error(response.message || 'Error al compartir pago');
       }),
       catchError((error: any) => {
-        console.error('Error sharing payment:', error);
         return throwError(() => error);
       })
     );
@@ -390,8 +341,6 @@ export class PaymentService {
         throw new Error(response.message || 'Error al eliminar pago');
       }),
       catchError((error: any) => {
-        console.error('Error deleting payment en PaymentService:', error);
-        
         // Preservar el error original pero mejorarlo si es necesario
         let enhancedError = error;
         

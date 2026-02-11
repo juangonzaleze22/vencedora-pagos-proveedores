@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -11,6 +12,33 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../shared/services/auth.service';
+
+/**
+ * Convierte errores técnicos de login en mensajes amigables para el usuario.
+ */
+function getMensajeAmigableLogin(error: unknown): string {
+  const msg = typeof (error as any)?.message === 'string' ? (error as any).message : '';
+  const status = (error as HttpErrorResponse)?.status;
+
+  // Error de red / servidor inalcanzable (status 0, Unknown Error, CORS, etc.)
+  if (status === 0 || msg.includes('Error Code: 0') || msg.includes('Http failure') || msg.includes('Unknown Error')) {
+    return 'No se pudo conectar con el servidor. Comprueba tu conexión a internet o inténtalo más tarde.';
+  }
+  if (status === 401) {
+    return 'Correo o contraseña incorrectos.';
+  }
+  if (status === 403) {
+    return 'No tienes permiso para acceder.';
+  }
+  if (status === 404 || (status && status >= 500)) {
+    return 'El servicio no está disponible. Inténtalo más tarde.';
+  }
+  // Mensaje ya amigable de la API (ej. "Credenciales inválidas")
+  if (msg && !msg.includes('Error Code:') && !msg.includes('Message:')) {
+    return msg;
+  }
+  return 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+}
 
 @Component({
   selector: 'app-login',
@@ -68,7 +96,7 @@ export class Login {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: error.message || 'Credenciales inválidas'
+            detail: getMensajeAmigableLogin(error)
           });
         }
       });

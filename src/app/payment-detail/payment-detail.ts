@@ -191,7 +191,6 @@ export class PaymentDetail implements OnInit {
         });
       },
       error: (error: any) => {
-        console.error('Error al compartir pago:', error);
         const errorMessage = error?.error?.message || error?.message || 'Error al compartir el pago';
         this.messageService.add({
           severity: 'error',
