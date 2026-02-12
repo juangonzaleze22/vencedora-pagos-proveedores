@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://lemonchiffon-gerbil-784486.hostingersite.com/api'
+  apiUrl: 'darkgrey-chinchilla-683536.hostingersite.com/api'
 };
