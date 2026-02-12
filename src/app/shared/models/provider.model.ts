@@ -1,4 +1,5 @@
 import { Payment } from './payment.model';
+import { parseLocalDateOptional } from '../utils/date.utils';
 
 export interface Provider {
   id: number;
@@ -59,7 +60,7 @@ export function mapProviderFromAPI(apiProvider: any): Provider {
     email: apiProvider.email,
     status: apiProvider.status,
     totalDebt: apiProvider.totalDebt,
-    lastPaymentDate: apiProvider.lastPaymentDate ? new Date(apiProvider.lastPaymentDate) : undefined,
+    lastPaymentDate: parseLocalDateOptional(apiProvider.lastPaymentDate),
     createdAt: apiProvider.createdAt ? new Date(apiProvider.createdAt) : undefined,
     updatedAt: apiProvider.updatedAt ? new Date(apiProvider.updatedAt) : undefined
   };

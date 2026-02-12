@@ -119,11 +119,14 @@ export class ApiService {
   /**
    * Obtiene un archivo (blob)
    * @param endpoint Endpoint relativo a la base URL
+   * @param params Parámetros de consulta opcionales
    * @returns Observable con el blob
    */
-  getFile(endpoint: string): Observable<Blob> {
+  getFile(endpoint: string, params?: Record<string, any>): Observable<Blob> {
+    const httpParams = this.buildParams(params);
     return this.http.get(`${this.baseUrl}${endpoint}`, {
       headers: this.getHeaders(),
+      params: httpParams,
       responseType: 'blob'
     }).pipe(
       catchError(this.handleError)

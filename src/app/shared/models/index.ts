@@ -8,4 +8,5 @@
 export * from './payment.model';
 export * from './provider.model';
 export * from './dashboard-stats.model';
+export * from './cashier.model';
 

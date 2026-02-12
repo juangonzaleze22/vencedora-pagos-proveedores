@@ -169,14 +169,17 @@ export class PaymentDetailDialog {
 
   onDownloadReceipt() {
     const payment = this.payment();
-    if (payment?.receiptFile) {
-      const link = document.createElement('a');
-      link.href = payment.receiptFile;
-      link.download = `comprobante_PAG-${payment.id}.jpg`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    if (payment?.receiptFiles && payment.receiptFiles.length > 0) {
+      payment.receiptFiles.forEach((url, index) => {
+        const link = document.createElement('a');
+        link.href = url;
+        const suffix = payment.receiptFiles.length > 1 ? `_${index + 1}` : '';
+        link.download = `comprobante_PAG-${payment.id}${suffix}.jpg`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
     }
   }
 }

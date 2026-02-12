@@ -495,6 +495,8 @@ export class PaymentReport implements OnInit {
     this.syncUrl(true);
   }
 
+  exportingReport = signal<boolean>(false);
+
   onExport() {
     const providerId = this.selectedProviderId();
     if (!providerId) {
@@ -506,15 +508,40 @@ export class PaymentReport implements OnInit {
       return;
     }
 
-    this.reportService.exportReport(providerId).subscribe({
-      next: () => {
+    this.exportingReport.set(true);
+    const startDate = this.dateRange().start;
+    const endDate = this.dateRange().end;
+
+    this.reportService.exportReport(
+      providerId,
+      startDate || undefined,
+      endDate || undefined
+    ).subscribe({
+      next: (blob: Blob) => {
+        // Crear URL temporal del blob y disparar descarga
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Nombre del archivo: reporte_<proveedor>_<fecha>.pdf
+        const providerName = this.selectedProvider?.companyName?.replace(/\s+/g, '_') || 'proveedor';
+        const today = new Date().toISOString().split('T')[0];
+        a.download = `reporte_${providerName}_${today}.pdf`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.exportingReport.set(false);
         this.messageService.add({
-          severity: 'info',
-          summary: 'Exportar',
-          detail: 'Funcionalidad de exportación en desarrollo'
+          severity: 'success',
+          summary: 'Reporte exportado',
+          detail: 'El reporte PDF se ha descargado correctamente'
         });
       },
       error: (error) => {
+        this.exportingReport.set(false);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -824,21 +851,20 @@ export class PaymentReport implements OnInit {
     ];
 
     if (!payment.deleted) {
-      items.push(
-        {
-          label: 'Compartir por WhatsApp',
-          icon: 'pi pi-share-alt',
-          command: () => this.onSharePayment(payment)
-        },
-        {
-          label: 'Editar',
-          icon: 'pi pi-pencil',
-          command: () => this.onEditPayment(payment)
-        }
-      );
-      // Solo roles que no son cajero pueden eliminar pagos
+      items.push({
+        label: 'Compartir por WhatsApp',
+        icon: 'pi pi-share-alt',
+        command: () => this.onSharePayment(payment)
+      });
+
+      // Solo roles que no son cajero pueden editar y eliminar pagos
       if (this.canEditPayments) {
         items.push(
+          {
+            label: 'Editar',
+            icon: 'pi pi-pencil',
+            command: () => this.onEditPayment(payment)
+          },
           { separator: true },
           {
             label: 'Eliminar',

@@ -15,6 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { PaymentList } from '../shared/components/data/payment-list/payment-list';
+import { AuthContext } from '../contexts/auth.context';
 
 const MODAL_DATE_FILTER_OPTIONS: { label: string; value: 'today' | 'last7' | 'month' | 'all' }[] = [
   { label: 'Todo', value: 'all' },
@@ -108,10 +109,16 @@ export class SupervisorDashboard {
     }));
   });
 
+  /** true si el usuario NO es cajero (puede registrar proveedores) */
+  get canRegisterProviders(): boolean {
+    return !this.authContext.hasRole('CAJERO');
+  }
+
   constructor(
     private reportService: ReportService,
     private supplierService: SupplierService,
-    private router: Router
+    private router: Router,
+    private authContext: AuthContext
   ) {
     this.loadDashboard();
   }

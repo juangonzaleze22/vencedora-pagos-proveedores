@@ -128,12 +128,12 @@
         
         <!-- Actions Area -->
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col gap-3">
-          <p-button
+          <!-- <p-button
             label="Imprimir Reporte"
             icon="pi pi-print"
             severity="info"
             styleClass="w-full"
-            (onClick)="onPrint()" />
+            (onClick)="onPrint()" /> -->
           <p-button
             label="Compartir Detalle"
             icon="pi pi-share-alt"
@@ -153,7 +153,7 @@
                 <i class="pi pi-image text-gray-400"></i>
                 <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Comprobante de Pago</h3>
               </div>
-              @if (paymentData.receiptFile) {
+              @if (paymentData.receiptFiles && paymentData.receiptFiles.length > 0) {
                 <div class="flex items-center gap-1">
                   <p-button
                     label="Descargar JPG"
@@ -168,19 +168,23 @@
           </div>
           
           <!-- Image Container -->
-          <div class="flex-1 bg-gray-100 dark:bg-gray-900 overflow-auto p-8 flex items-center justify-center min-h-[500px]">
-            @if (paymentData.receiptFile) {
-              <div class="relative group cursor-zoom-in max-w-full">
-                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none rounded-lg"></div>
-                <app-lazy-image
-                  [src]="paymentData.receiptFile"
-                  [alt]="'Comprobante de pago #' + paymentData.id"
-                  width="100%"
-                  height="auto"
-                  objectFit="contain"
-                  [rounded]="true"
-                  [preview]="true"
-                  styleClass="shadow-2xl rounded-lg border border-gray-200 dark:border-gray-700 mx-auto transition-transform duration-300 transform origin-center" />
+          <div class="flex-1 bg-gray-100 dark:bg-gray-900 overflow-auto p-8 min-h-[500px]">
+            @if (paymentData.receiptFiles && paymentData.receiptFiles.length > 0) {
+              <div class="flex flex-col gap-6 items-center">
+                @for (receiptUrl of paymentData.receiptFiles; track $index) {
+                  <div class="relative group cursor-zoom-in max-w-full">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none rounded-lg"></div>
+                    <app-lazy-image
+                      [src]="receiptUrl"
+                      [alt]="'Comprobante de pago #' + paymentData.id + ' (' + ($index + 1) + ')'"
+                      width="100%"
+                      height="auto"
+                      objectFit="contain"
+                      [rounded]="true"
+                      [preview]="true"
+                      styleClass="shadow-2xl rounded-lg border border-gray-200 dark:border-gray-700 mx-auto transition-transform duration-300 transform origin-center" />
+                  </div>
+                }
               </div>
             } @else {
               <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 py-12">
@@ -191,9 +195,9 @@
           </div>
           
           <!-- Bottom Footer -->
-          @if (paymentData.receiptFile) {
+          @if (paymentData.receiptFiles && paymentData.receiptFiles.length > 0) {
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs text-gray-500">
-              <p>comprobante_PAG-{{ paymentData.id }}.jpg</p>
+              <p>{{ paymentData.receiptFiles.length }} comprobante{{ paymentData.receiptFiles.length > 1 ? 's' : '' }} — PAG-{{ paymentData.id }}</p>
               @if (paymentData.createdAt) {
                 <p>Subido el {{ paymentData.createdAt | date:'dd MMM yyyy, HH:mm' }}</p>
               }

@@ -301,8 +301,9 @@
             <app-file-upload
               #fileUpload
               accept="image/*,.pdf"
-              [multiple]="false"
-              [existingImageUrl]="existingReceiptUrl()"
+              [multiple]="true"
+              [maxFiles]="2"
+              [existingImageUrls]="existingReceiptUrls()"
               (fileSelect)="onFileSelect($event)" />
           </div>
         </div>
@@ -328,7 +329,7 @@
   </app-app-card>
 
   <p class="mt-6 text-center text-xs text-gray-400 dark:text-gray-600">
-    © 2023 Sistema de Gestión de Pagos. Todos los derechos reservados.
+    © 2026 Sistema de Gestión de pagos de proveedores. Ferretería La Vencedora.
   </p>
 </app-page-container>
 

@@ -360,21 +360,13 @@ export class LocateProvider {
   }
 
   onViewOrderDetail(debt: Debt) {
-    if (debt.orderId) {
-      // Navegar al reporte detallado con el orderId
-      this.router.navigate(['/reports/detailed'], { 
-        queryParams: { 
-          providerId: this.provider?.id,
-          orderId: debt.orderId 
-        } 
-      });
-    } else {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Advertencia',
-        detail: 'Esta deuda no tiene una orden asociada'
-      });
-    }
+    // Navegar al reporte detallado con el debtId
+    this.router.navigate(['/reports/detailed'], { 
+      queryParams: { 
+        providerId: this.provider?.id,
+        debtId: debt.id 
+      } 
+    });
   }
 
   onExportReport() {

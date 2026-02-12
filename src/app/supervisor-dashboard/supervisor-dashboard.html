@@ -37,13 +37,15 @@
     <div>
       <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Acciones Principales</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <app-action-card
-          title="Registro de Proveedores"
-          description="Dar de alta una nueva empresa o proveedor en el sistema. Incluye validación de RIF y datos fiscales."
-          icon="pi pi-building"
-          iconColor="blue"
-          route="/providers/register"
-          linkText="Comenzar registro" />
+        @if (canRegisterProviders) {
+          <app-action-card
+            title="Registro de Proveedores"
+            description="Dar de alta una nueva empresa o proveedor en el sistema. Incluye validación de RIF y datos fiscales."
+            icon="pi pi-building"
+            iconColor="blue"
+            route="/providers/register"
+            linkText="Comenzar registro" />
+        }
         
         <app-action-card
           title="Registrar Pago"
@@ -81,7 +83,7 @@
 
     <!-- Footer -->
     <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-      <p>© 2023 Sistema de Gestión Financiera. Todos los derechos reservados.</p>
+      <p>© 2026 Sistema de Gestión de pagos de proveedores. Ferretería La Vencedora.</p>
     </div>
   </div>
 </app-page-container>

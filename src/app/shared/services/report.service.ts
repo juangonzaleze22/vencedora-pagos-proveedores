@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { Provider, Debt } from '../models/provider.model';
 import { Payment, mapPaymentMethodFromAPI } from '../models/payment.model';
+import { parseLocalDate, parseLocalDateOptional } from '../utils/date.utils';
 
 export interface DashboardStats {
   pendingPayments: number;
@@ -82,7 +83,7 @@ export class ReportService {
               taxId: data.supplier.taxId,
               status: data.supplier.status,
               totalDebt: data.supplier.totalDebt,
-              lastPaymentDate: data.supplier.lastPaymentDate ? new Date(data.supplier.lastPaymentDate) : undefined,
+              lastPaymentDate: parseLocalDateOptional(data.supplier.lastPaymentDate),
               createdAt: data.supplier.createdAt ? new Date(data.supplier.createdAt) : undefined,
               updatedAt: data.supplier.updatedAt ? new Date(data.supplier.updatedAt) : undefined
             },
@@ -91,7 +92,7 @@ export class ReportService {
             averagePayment: data.averagePayment,
             debts: data.debts.map(debt => ({
               ...debt,
-              dueDate: new Date(debt.dueDate),
+              dueDate: parseLocalDate(debt.dueDate),
               createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
               updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined
             }))
@@ -131,16 +132,7 @@ export class ReportService {
         if (response.success) {
           return {
             data: (response.data || []).map((payment: any) => {
-              // Extraer solo la fecha (sin hora) para evitar problemas de zona horaria
-              const paymentDateStr = payment.paymentDate;
-              let paymentDate: Date;
-              if (paymentDateStr) {
-                // Si viene como ISO string, extraer solo la parte de la fecha
-                const dateOnly = paymentDateStr.split('T')[0]; // "2026-01-14"
-                paymentDate = new Date(dateOnly + 'T00:00:00');
-              } else {
-                paymentDate = new Date();
-              }
+              const paymentDate = payment.paymentDate ? parseLocalDate(payment.paymentDate) : new Date();
               
               // Determinar si el pago está eliminado: si deletedAt existe, está eliminado
               const isDeleted = !!payment.deletedAt;
@@ -189,17 +181,24 @@ export class ReportService {
   }
 
   /**
-   * Exporta reporte de un proveedor
+   * Exporta reporte de un proveedor como PDF (blob)
    */
-  exportReport(supplierId: number): Observable<any> {
-    return this.apiService.get<any>(`/reports/export/${supplierId}`).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Error al exportar reporte');
-      })
-    );
+  exportReport(
+    supplierId: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<Blob> {
+    const params: Record<string, any> = {};
+
+    if (startDate) {
+      params['startDate'] = startDate.toISOString().split('T')[0];
+    }
+
+    if (endDate) {
+      params['endDate'] = endDate.toISOString().split('T')[0];
+    }
+
+    return this.apiService.getFile(`/reports/export/${supplierId}`, params);
   }
 }
 

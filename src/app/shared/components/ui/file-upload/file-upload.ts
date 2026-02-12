@@ -8,6 +8,15 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { LazyImage } from '../lazy-image/lazy-image';
 
+export interface FilePreview {
+  file: File | null;       // null cuando es una imagen existente (modo edición)
+  previewUrl: string | null;
+  isImage: boolean;
+  isExisting: boolean;     // true si viene del servidor (modo edición)
+  name: string;
+  size: string;
+}
+
 @Component({
   selector: 'app-file-upload',
   standalone: true,
@@ -20,46 +29,71 @@ export class FileUploadComponent implements OnChanges {
   @Input() accept: string = 'image/*,.pdf';
   @Input() maxFileSize: number = 5000000; // 5MB
   @Input() multiple: boolean = false;
+  @Input() maxFiles: number = 0; // 0 = sin límite
   @Input() existingImageUrl?: string; // URL de imagen existente (para modo edición)
+  @Input() existingImageUrls?: string[]; // URLs de imágenes existentes (modo edición múltiple)
   @Output() fileSelect = new EventEmitter<File[]>();
 
   @ViewChild('fileUpload') fileUploadComponent?: FileUpload;
 
-  selectedFile = signal<File | null>(null);
-  previewUrl = signal<string | null>(null);
-  isImage = signal<boolean>(false);
-  hasExistingImage = signal<boolean>(false);
+  filePreviews = signal<FilePreview[]>([]);
   imageExplicitlyRemoved = signal<boolean>(false);
 
   constructor(private messageService: MessageService) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    // Si el usuario eliminó explícitamente la imagen, no restaurarla a menos que cambie el input
-    if (this.imageExplicitlyRemoved() && changes['existingImageUrl']?.previousValue === changes['existingImageUrl']?.currentValue) {
+    // Si el usuario eliminó explícitamente las imágenes, no restaurarlas a menos que cambie el input
+    if (this.imageExplicitlyRemoved() && 
+        changes['existingImageUrl']?.previousValue === changes['existingImageUrl']?.currentValue &&
+        changes['existingImageUrls']?.previousValue === changes['existingImageUrls']?.currentValue) {
       return;
     }
-    
-    // Si el input cambió a null/undefined, resetear el flag de eliminación
-    if (changes['existingImageUrl'] && !this.existingImageUrl) {
+
+    // Si los inputs cambiaron a null/undefined, resetear el flag de eliminación
+    if ((changes['existingImageUrl'] && !this.existingImageUrl) || 
+        (changes['existingImageUrls'] && (!this.existingImageUrls || this.existingImageUrls.length === 0))) {
       this.imageExplicitlyRemoved.set(false);
     }
-    
-    // Si hay una URL de imagen existente, mostrarla
-    if (changes['existingImageUrl'] && this.existingImageUrl && !this.selectedFile() && !this.imageExplicitlyRemoved()) {
-      this.hasExistingImage.set(true);
-      // Usar la URL directamente (el componente lazy-image manejará la construcción si es necesario)
-      this.previewUrl.set(this.existingImageUrl);
-      
-      // Intentar detectar si es imagen - por defecto asumir que es imagen a menos que sea claramente PDF
-      const urlLower = this.existingImageUrl.toLowerCase();
-      const isPdf = urlLower.includes('.pdf') || urlLower.includes('/pdf/');
-      
-      // Si no es claramente un PDF, mostrar como imagen
-      // El componente lazy-image manejará el error si no es una imagen válida
-      this.isImage.set(!isPdf);
-    } else if (!this.existingImageUrl && !this.selectedFile()) {
-      this.hasExistingImage.set(false);
-      this.previewUrl.set(null);
+
+    // Manejar múltiples URLs existentes
+    if (changes['existingImageUrls'] && this.existingImageUrls && this.existingImageUrls.length > 0 && !this.imageExplicitlyRemoved()) {
+      const currentNewFiles = this.filePreviews().filter(p => !p.isExisting);
+      const existingPreviews: FilePreview[] = this.existingImageUrls.map(url => {
+        const urlLower = url.toLowerCase();
+        const isPdf = urlLower.includes('.pdf') || urlLower.includes('/pdf/');
+        return {
+          file: null,
+          previewUrl: url,
+          isImage: !isPdf,
+          isExisting: true,
+          name: 'Comprobante existente',
+          size: ''
+        };
+      });
+      this.filePreviews.set([...existingPreviews, ...currentNewFiles]);
+    }
+    // Manejar URL única existente (compatibilidad)
+    else if (changes['existingImageUrl'] && this.existingImageUrl && !this.imageExplicitlyRemoved()) {
+      const hasNewFiles = this.filePreviews().some(p => !p.isExisting);
+      if (!hasNewFiles) {
+        const urlLower = this.existingImageUrl.toLowerCase();
+        const isPdf = urlLower.includes('.pdf') || urlLower.includes('/pdf/');
+        const existingPreview: FilePreview = {
+          file: null,
+          previewUrl: this.existingImageUrl,
+          isImage: !isPdf,
+          isExisting: true,
+          name: 'Comprobante actual',
+          size: ''
+        };
+        this.filePreviews.set([existingPreview]);
+      }
+    } else if (!this.existingImageUrl && !this.existingImageUrls?.length) {
+      // Si no hay URLs existentes, solo mantener los archivos nuevos
+      const currentNewFiles = this.filePreviews().filter(p => !p.isExisting);
+      if (currentNewFiles.length !== this.filePreviews().length) {
+        this.filePreviews.set(currentNewFiles);
+      }
     }
   }
 
@@ -67,45 +101,97 @@ export class FileUploadComponent implements OnChanges {
     const files: File[] = event.files;
 
     if (files && files.length > 0) {
-      const file = files[0];
-
-      // Guardar el archivo directamente
-      this.selectedFile.set(file);
-      // Cuando se selecciona un nuevo archivo, ya no hay imagen existente
-      this.hasExistingImage.set(false);
-      // Resetear el flag de eliminación ya que se seleccionó un nuevo archivo
+      // Resetear flag de eliminación al seleccionar nuevos archivos
       this.imageExplicitlyRemoved.set(false);
-      
-      // Verificar si es imagen
-      if (file.type.startsWith('image/')) {
-        this.isImage.set(true);
-        // Crear URL de preview
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.previewUrl.set(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        this.isImage.set(false);
-        this.previewUrl.set(null);
+
+      // Calcular cuántos archivos se pueden agregar según el límite
+      let filesToAdd = Array.from(files);
+      if (this.maxFiles > 0) {
+        const currentCount = this.filePreviews().length;
+        const remaining = this.maxFiles - currentCount;
+        if (remaining <= 0) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Límite alcanzado',
+            detail: `Solo se permiten ${this.maxFiles} archivo${this.maxFiles > 1 ? 's' : ''}`
+          });
+          if (this.fileUploadComponent) {
+            this.fileUploadComponent.clear();
+          }
+          return;
+        }
+        if (filesToAdd.length > remaining) {
+          filesToAdd = filesToAdd.slice(0, remaining);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Límite de archivos',
+            detail: `Solo se agregaron ${remaining} archivo${remaining > 1 ? 's' : ''} (máximo ${this.maxFiles})`
+          });
+        }
       }
 
-      this.fileSelect.emit([...files]);
+      for (const file of filesToAdd) {
+        const preview: FilePreview = {
+          file: file,
+          previewUrl: null,
+          isImage: file.type.startsWith('image/'),
+          isExisting: false,
+          name: file.name,
+          size: this.formatFileSize(file.size)
+        };
+
+        // Crear preview si es imagen
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e: any) => {
+            preview.previewUrl = e.target.result;
+            // Forzar actualización del signal
+            this.filePreviews.update(previews => [...previews]);
+          };
+          reader.readAsDataURL(file);
+        }
+
+        this.filePreviews.update(previews => [...previews, preview]);
+      }
+
+      // Emitir solo los archivos nuevos (File objects)
+      this.emitFiles();
+
+      // Limpiar el componente PrimeNG para permitir seleccionar más archivos
+      if (this.fileUploadComponent) {
+        this.fileUploadComponent.clear();
+      }
     }
   }
 
   /**
-   * Obtiene el archivo seleccionado actual
+   * Indica si se alcanzó el límite máximo de archivos
+   */
+  isMaxFilesReached(): boolean {
+    return this.maxFiles > 0 && this.filePreviews().length >= this.maxFiles;
+  }
+
+  /**
+   * Obtiene los archivos seleccionados actuales (solo File, no existentes)
+   */
+  getSelectedFiles(): File[] {
+    return this.filePreviews()
+      .filter(p => p.file !== null)
+      .map(p => p.file!);
+  }
+
+  /**
+   * Obtiene el primer archivo seleccionado (compatibilidad)
    */
   getSelectedFile(): File | null {
-    return this.selectedFile();
+    const files = this.getSelectedFiles();
+    return files.length > 0 ? files[0] : null;
   }
 
   onError(event: any) {
     let errorMessage = 'Error al subir el archivo';
     
     if (event.error) {
-      // Traducir mensajes de error comunes de PrimeNG
       const error = event.error.toString().toLowerCase();
       if (error.includes('file size')) {
         errorMessage = 'El archivo es demasiado grande. Tamaño máximo: 5MB';
@@ -123,47 +209,87 @@ export class FileUploadComponent implements OnChanges {
     });
   }
 
+  /**
+   * Elimina un archivo por su índice
+   */
+  onRemoveAt(index: number) {
+    const previews = this.filePreviews();
+    if (index >= 0 && index < previews.length) {
+      const removed = previews[index];
+      this.filePreviews.update(p => p.filter((_, i) => i !== index));
+      
+      // Si se eliminó una imagen existente, marcar como explícitamente eliminada
+      if (removed.isExisting) {
+        const hasMoreExisting = this.filePreviews().some(p => p.isExisting);
+        if (!hasMoreExisting) {
+          this.imageExplicitlyRemoved.set(true);
+        }
+      }
+
+      this.emitFiles();
+    }
+  }
+
+  /**
+   * Elimina todos los archivos (compatibilidad con el método antiguo)
+   */
   onRemove() {
-    // Limpiar completamente todo
-    this.selectedFile.set(null);
-    this.hasExistingImage.set(false);
-    this.previewUrl.set(null);
-    this.isImage.set(false);
-    // Marcar que la imagen fue eliminada explícitamente
+    this.filePreviews.set([]);
     this.imageExplicitlyRemoved.set(true);
     
-    // Limpiar el componente de PrimeNG si existe
     if (this.fileUploadComponent) {
       this.fileUploadComponent.clear();
     }
     
-    // Emitir evento vacío para indicar que se eliminó
     this.fileSelect.emit([]);
   }
 
   clear() {
-    this.selectedFile.set(null);
-    this.hasExistingImage.set(false);
-    this.previewUrl.set(null);
-    this.isImage.set(false);
+    this.filePreviews.set([]);
     this.imageExplicitlyRemoved.set(false);
     
-    // Limpiar el componente de PrimeNG si existe
     if (this.fileUploadComponent) {
       this.fileUploadComponent.clear();
     }
     this.fileSelect.emit([]);
   }
 
+  hasFiles(): boolean {
+    return this.filePreviews().length > 0;
+  }
+
+  hasExistingImages(): boolean {
+    return this.filePreviews().some(p => p.isExisting);
+  }
+
+  /**
+   * Obtiene las URLs de imágenes existentes que el usuario conservó (no eliminó)
+   */
+  getExistingImageUrls(): string[] {
+    return this.filePreviews()
+      .filter(p => p.isExisting && p.previewUrl)
+      .map(p => p.previewUrl!);
+  }
+
+  private emitFiles() {
+    const newFiles = this.getSelectedFiles();
+    this.fileSelect.emit(newFiles);
+  }
+
+  private formatFileSize(bytes: number): string {
+    const sizeInMB = bytes / (1024 * 1024);
+    return sizeInMB.toFixed(2) + ' MB';
+  }
+
+  // Métodos de compatibilidad (para componentes que usan la API antigua)
   getFileName(): string {
-    const file = this.selectedFile();
-    return file ? file.name : '';
+    const files = this.getSelectedFiles();
+    return files.length > 0 ? files[0].name : '';
   }
 
   getFileSize(): string {
-    const file = this.selectedFile();
-    if (!file) return '';
-    const sizeInMB = file.size / (1024 * 1024);
-    return sizeInMB.toFixed(2) + ' MB';
+    const files = this.getSelectedFiles();
+    if (files.length === 0) return '';
+    return this.formatFileSize(files[0].size);
   }
 }

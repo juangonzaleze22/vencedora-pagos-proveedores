@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { Observable, map, catchError, throwError, of } from 'rxjs';
 import { ApiService } from './api.service';
 import { Payment, PaymentVerification, mapPaymentMethodFromAPI, mapPaymentMethodToAPI } from '../models/payment.model';
+import { CashierPaymentsParams, CashierPaymentsResponse, CashierPaymentKPIs } from '../models/cashier.model';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
+import { parseLocalDate, parseLocalDateOptional, formatLocalDate } from '../utils/date.utils';
 
 export interface CreatePaymentData {
   debtId: number;
@@ -13,11 +15,14 @@ export interface CreatePaymentData {
   senderEmail: string;
   confirmationNumber: string;
   paymentDate: Date;
-  receipt?: File; // File para nuevo archivo
+  receipt?: File; // File para nuevo archivo (compatibilidad)
+  receiptFiles?: File[]; // Array de Files para múltiples archivos
+  existingReceiptFiles?: string[]; // URLs de imágenes existentes a conservar (modo edición)
   removeReceipt?: boolean; // true para eliminar la imagen existente
   isBolivares?: boolean; // Switch BS/USD
   exchangeRate?: number; // Tasa del dólar
   amountInBolivares?: number; // Monto en bolívares
+  createdBy?: number; // ID del usuario que registra el pago
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,8 +45,8 @@ export class PaymentService {
       paymentDate = new Date(data.paymentDate);
     }
     
-    // Formatear fecha como ISO string (YYYY-MM-DD)
-    const dateStr = paymentDate.toISOString().split('T')[0];
+    // Formatear fecha usando componentes locales (evita desplazamiento por timezone)
+    const dateStr = formatLocalDate(paymentDate);
     
     // Mapear método de pago a formato API
     const paymentMethodAPI = mapPaymentMethodToAPI(data.paymentMethod);
@@ -56,6 +61,11 @@ export class PaymentService {
     formData.append('confirmationNumber', data.confirmationNumber);
     formData.append('paymentDate', dateStr);
     
+    // ID del usuario que registra el pago
+    if (data.createdBy !== undefined && data.createdBy !== null) {
+      formData.append('createdBy', data.createdBy.toString());
+    }
+    
     // Campos de bolívares - siempre enviar isBolivares
     formData.append('isBolivares', (data.isBolivares ?? false).toString());
     
@@ -69,7 +79,14 @@ export class PaymentService {
       }
     }
     
-    if (data.receipt && data.receipt instanceof File) {
+    // Enviar múltiples archivos: cada uno con el mismo campo 'receipt'
+    if (data.receiptFiles && data.receiptFiles.length > 0) {
+      data.receiptFiles.forEach((file) => {
+        if (file instanceof File) {
+          formData.append('receipt', file, file.name);
+        }
+      });
+    } else if (data.receipt && data.receipt instanceof File) {
       formData.append('receipt', data.receipt, data.receipt.name);
     }
 
@@ -233,8 +250,8 @@ export class PaymentService {
       paymentDate = new Date(data.paymentDate);
     }
     
-    // Formatear fecha como ISO string (YYYY-MM-DD)
-    const dateStr = paymentDate.toISOString().split('T')[0];
+    // Formatear fecha usando componentes locales (evita desplazamiento por timezone)
+    const dateStr = formatLocalDate(paymentDate);
     
     // Mapear método de pago a formato API
     const paymentMethodAPI = mapPaymentMethodToAPI(data.paymentMethod);
@@ -263,11 +280,24 @@ export class PaymentService {
     if (data.removeReceipt === true) {
       formData.append('removeReceipt', 'true');
     }
-    if (data.receipt && data.receipt instanceof File) {
-      formData.append('receipt', data.receipt, data.receipt.name);
+    
+    // Enviar URLs de imágenes existentes que el usuario conservó
+    if (data.existingReceiptFiles && data.existingReceiptFiles.length > 0) {
+      data.existingReceiptFiles.forEach((url) => {
+        formData.append('existingReceiptFiles', url);
+      });
     }
     
-    // Si no se envía ni removeReceipt ni receipt, mantiene la imagen actual
+    // Enviar múltiples archivos nuevos: cada uno con el mismo campo 'receipt'
+    if (data.receiptFiles && data.receiptFiles.length > 0) {
+      data.receiptFiles.forEach((file) => {
+        if (file instanceof File) {
+          formData.append('receipt', file, file.name);
+        }
+      });
+    } else if (data.receipt && data.receipt instanceof File) {
+      formData.append('receipt', data.receipt, data.receipt.name);
+    }
 
     return this.apiService.putFormData<Payment>(`/payments/${id}`, formData).pipe(
       map(response => {
@@ -357,6 +387,121 @@ export class PaymentService {
   }
 
   /**
+   * Obtiene pagos procesados por un cajero específico.
+   * El backend devuelve { data: Payment[], pagination } (estructura plana).
+   * Los KPIs se calculan en el frontend a partir de todos los pagos recibidos.
+   * @param cashierId ID del cajero
+   * @param params Filtros opcionales (paginación, fechas, método de pago, etc.)
+   */
+  getPaymentsByCashier(
+    cashierId: number,
+    params?: CashierPaymentsParams
+  ): Observable<CashierPaymentsResponse> {
+    const queryParams: Record<string, any> = {};
+
+    if (params?.page) queryParams['page'] = params.page;
+    if (params?.limit) queryParams['limit'] = params.limit;
+    if (params?.startDate) queryParams['startDate'] = params.startDate;
+    if (params?.endDate) queryParams['endDate'] = params.endDate;
+    if (params?.paymentMethod) queryParams['paymentMethod'] = params.paymentMethod;
+    if (params?.includeDeleted !== undefined) queryParams['includeDeleted'] = params.includeDeleted;
+
+    return this.apiService.get<any>(`/payments/cashier/${cashierId}`, queryParams).pipe(
+      map((response: any) => {
+        if (response.success) {
+          // El backend devuelve: { success, data: Payment[], pagination }
+          const rawPayments: any[] = response.data || [];
+          const payments = rawPayments.map((p: any) => this.mapPaymentFromAPI(p));
+          const pagination = response.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 };
+
+          // Extraer info del cajero del primer pago (si existe createdByUser)
+          const firstWithUser = rawPayments.find((p: any) => p.createdByUser);
+          const cashier = firstWithUser?.createdByUser
+            ? {
+                id: firstWithUser.createdByUser.id,
+                nombre: firstWithUser.createdByUser.nombre,
+                email: firstWithUser.createdByUser.email,
+                rol: 'CAJERO'
+              }
+            : { id: cashierId, nombre: '', email: '', rol: 'CAJERO' };
+
+          // Calcular KPIs a partir de los pagos recibidos
+          const kpis = this.calculateKPIs(payments);
+
+          return { cashier, kpis, payments, pagination };
+        }
+        throw new Error(response.message || 'Error al obtener pagos del cajero');
+      }),
+      catchError((error: any) => {
+        if (error.error?.message) {
+          return throwError(() => new Error(error.error.message));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Calcula KPIs a partir de un array de pagos ya mapeados.
+   */
+  private calculateKPIs(payments: Payment[]): CashierPaymentKPIs {
+    const activePayments = payments.filter(p => !p.deleted);
+
+    const totalPayments = activePayments.length;
+    const totalAmount = activePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalAmountInBolivares = activePayments
+      .filter(p => p.isBolivares && p.amountInBolivares)
+      .reduce((sum, p) => sum + (p.amountInBolivares || 0), 0);
+    const averagePaymentAmount = totalPayments > 0 ? totalAmount / totalPayments : 0;
+
+    const byPaymentMethod = {
+      ZELLE: { count: 0, totalAmount: 0 },
+      TRANSFER: { count: 0, totalAmount: 0 },
+      CASH: { count: 0, totalAmount: 0 }
+    };
+
+    for (const p of activePayments) {
+      const key = p.paymentMethod === 'Zelle' ? 'ZELLE'
+        : p.paymentMethod === 'Transferencia' ? 'TRANSFER'
+        : 'CASH';
+      byPaymentMethod[key].count++;
+      byPaymentMethod[key].totalAmount += p.amount || 0;
+    }
+
+    const byStatus = {
+      verified: payments.filter(p => p.verified && !p.deleted).length,
+      unverified: payments.filter(p => !p.verified && !p.deleted).length,
+      shared: payments.filter(p => p.shared && !p.deleted).length,
+      deleted: payments.filter(p => p.deleted).length
+    };
+
+    // Rango de fechas
+    const dates = activePayments
+      .map(p => p.paymentDate)
+      .filter(d => d instanceof Date && !isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    const dateRange = {
+      firstPayment: dates.length > 0 ? dates[0] : null,
+      lastPayment: dates.length > 0 ? dates[dates.length - 1] : null
+    };
+
+    // Proveedores distintos
+    const supplierIds = new Set(activePayments.map(p => p.supplierId).filter(Boolean));
+
+    return {
+      totalPayments,
+      totalAmount,
+      totalAmountInBolivares,
+      averagePaymentAmount,
+      byPaymentMethod,
+      byStatus,
+      dateRange,
+      suppliersServed: supplierIds.size
+    };
+  }
+
+  /**
    * Mapea un pago desde la API
    */
   private mapPaymentFromAPI(apiPayment: any): Payment {
@@ -371,7 +516,7 @@ export class PaymentService {
         status: apiPayment.debt.status,
         remainingAmount: apiPayment.debt.remainingAmount,
         initialAmount: apiPayment.debt.initialAmount,
-        dueDate: apiPayment.debt.dueDate ? new Date(apiPayment.debt.dueDate) : undefined,
+        dueDate: parseLocalDateOptional(apiPayment.debt.dueDate),
         debtNumber: apiPayment.debt.debtNumber
       } : undefined,
       amount: apiPayment.amount,
@@ -379,8 +524,8 @@ export class PaymentService {
       senderName: apiPayment.senderName,
       senderEmail: apiPayment.senderEmail,
       confirmationNumber: apiPayment.confirmationNumber,
-      paymentDate: new Date(apiPayment.paymentDate),
-      receiptFile: apiPayment.receiptFile,
+      paymentDate: parseLocalDate(apiPayment.paymentDate),
+      receiptFiles: apiPayment.receiptFiles ?? (apiPayment.receiptFile ? [apiPayment.receiptFile] : []),
       verified: apiPayment.verified,
       shared: apiPayment.shared || false,
       sharedAt: apiPayment.sharedAt ? new Date(apiPayment.sharedAt) : undefined,

@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { ProviderOrder, OrderDetail } from '../models/provider.model';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
+import { parseLocalDate } from '../utils/date.utils';
 
 export interface CreateOrderData {
   supplierId: number;
@@ -119,9 +120,9 @@ export class OrderService {
       id: apiOrder.id,
       supplierId: apiOrder.supplierId,
       amount: apiOrder.amount,
-      dispatchDate: new Date(apiOrder.dispatchDate),
+      dispatchDate: parseLocalDate(apiOrder.dispatchDate),
       creditDays: apiOrder.creditDays,
-      dueDate: new Date(apiOrder.dueDate),
+      dueDate: parseLocalDate(apiOrder.dueDate),
       createdAt: apiOrder.createdAt ? new Date(apiOrder.createdAt) : undefined
     };
   }
@@ -135,9 +136,9 @@ export class OrderService {
       supplierId: apiOrder.supplierId,
       supplier: apiOrder.supplier,
       amount: apiOrder.amount,
-      dispatchDate: new Date(apiOrder.dispatchDate),
+      dispatchDate: parseLocalDate(apiOrder.dispatchDate),
       creditDays: apiOrder.creditDays,
-      dueDate: new Date(apiOrder.dueDate),
+      dueDate: parseLocalDate(apiOrder.dueDate),
       debt: apiOrder.debt,
       createdBy: apiOrder.createdBy,
       createdAt: apiOrder.createdAt ? new Date(apiOrder.createdAt) : undefined,

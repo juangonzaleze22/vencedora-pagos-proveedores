@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+// Ajuste para la tabla en pantallas pequeñas
+:host ::ng-deep {
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      @apply bg-gray-50 dark:bg-gray-800/50 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400;
+    }
+
+    .p-datatable-tbody > tr > td {
+      @apply py-3;
+    }
+  }
+
+  .p-paginator {
+    @apply border-t border-gray-200 dark:border-gray-700;
+  }
+
+  // Ajuste para el select de cajero en modo filtro
+  .p-select-filter {
+    @apply text-sm;
+  }
+}

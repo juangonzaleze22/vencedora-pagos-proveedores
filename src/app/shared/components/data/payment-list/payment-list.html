@@ -8,7 +8,7 @@
   </p>
 } @else {
   <!-- Responsive: cards (grid 2 columnas) -->
-  <div class="lg:hidden p-3 sm:p-4 grid grid-cols-2 gap-4">
+  <div class="lg:hidden p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
     @for (payment of payments; track payment.id) {
       <div
         class="rounded-xl border-2 p-4 space-y-3 min-w-0"
@@ -95,7 +95,7 @@
             </div>
           }
         </div>
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
           <div>
             <span class="text-xs text-gray-500 dark:text-gray-400 block">Fecha</span>
             <span [ngClass]="{'line-through text-gray-500': payment.deleted}">
@@ -127,24 +127,25 @@
               <span class="text-[10px] text-gray-500 dark:text-gray-400 block">Bs {{ payment.amountInBolivares | number:'1.2-2' }}</span>
             }
           </div>
-          <div>
-            <span class="text-xs text-gray-500 dark:text-gray-400 block">Comprobante</span>
-            @if (payment.receiptFile) {
-              <span [ngClass]="{'opacity-50': payment.deleted}">
+        </div>
+        <!-- Comprobantes en fila separada -->
+        @if (payment.receiptFiles && payment.receiptFiles.length > 0) {
+          <div class="mt-2 text-sm">
+            <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Comprobantes</span>
+            <div class="flex gap-2" [ngClass]="{'opacity-50': payment.deleted}">
+              @for (url of payment.receiptFiles; track $index) {
                 <app-lazy-image
-                  [src]="payment.receiptFile"
-                  [alt]="'Comprobante #' + payment.id"
-                  width="48px"
-                  height="48px"
+                  [src]="url"
+                  [alt]="'Comprobante #' + payment.id + ' (' + ($index + 1) + ')'"
+                  width="60px"
+                  height="60px"
                   objectFit="cover"
                   [rounded]="true"
                   [preview]="true" />
-              </span>
-            } @else {
-              <span class="text-xs text-gray-400">—</span>
-            }
+              }
+            </div>
           </div>
-        </div>
+        }
       </div>
     }
   </div>
@@ -247,18 +248,20 @@
             </div>
           </td>
           <td class="text-center py-2 align-middle">
-            <div class="flex items-center justify-center">
-              @if (payment.receiptFile) {
-                <div [ngClass]="{'opacity-50': payment.deleted}">
-                  <app-lazy-image
-                    [src]="payment.receiptFile"
-                    [alt]="'Comprobante #' + payment.id"
-                    width="48px"
-                    height="48px"
-                    objectFit="cover"
-                    [rounded]="true"
-                    [preview]="true" />
-                </div>
+            <div class="flex items-center justify-center gap-1">
+              @if (payment.receiptFiles && payment.receiptFiles.length > 0) {
+                @for (url of payment.receiptFiles; track $index) {
+                  <div [ngClass]="{'opacity-50': payment.deleted}">
+                    <app-lazy-image
+                      [src]="url"
+                      [alt]="'Comprobante #' + payment.id + ' (' + ($index + 1) + ')'"
+                      width="48px"
+                      height="48px"
+                      objectFit="cover"
+                      [rounded]="true"
+                      [preview]="true" />
+                  </div>
+                }
               } @else {
                 <span class="text-xs text-gray-400">—</span>
               }

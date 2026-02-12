@@ -22,7 +22,7 @@ export interface Payment {
   senderEmail?: string;
   confirmationNumber?: string;
   paymentDate: Date;
-  receiptFile?: string;
+  receiptFiles: string[];
   verified: boolean;
   shared?: boolean;
   sharedAt?: Date;

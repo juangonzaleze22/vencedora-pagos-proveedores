@@ -243,10 +243,11 @@
                   
                   <div class="mt-4">
                     <p-button
-                      label="Exportar Reporte"
-                      icon="pi pi-download"
+                      [label]="exportingReport() ? 'Exportando...' : 'Exportar Reporte'"
+                      [icon]="exportingReport() ? 'pi pi-spin pi-spinner' : 'pi pi-download'"
                       severity="success"
                       styleClass="w-full"
+                      [disabled]="exportingReport()"
                       (onClick)="onExport()" />
                   </div>
                 </div>
@@ -487,7 +488,7 @@
           <td class="text-center py-2">
             <div class="flex items-center justify-center w-12 h-12 mx-auto opacity-50">
               <app-lazy-image
-                [src]="payment.receiptFile"
+                [src]="payment.receiptFiles && payment.receiptFiles.length > 0 ? payment.receiptFiles[0] : ''"
                 [alt]="'Comprobante de pago #' + payment.id"
                 width="48px"
                 height="48px"

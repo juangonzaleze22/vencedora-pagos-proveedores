@@ -45,6 +45,10 @@ export const routes: Routes = [
         loadComponent: () => import('./payment-report/payment-report').then(m => m.PaymentReport)
       },
       {
+        path: 'cashier-close',
+        loadComponent: () => import('./cashier-close/cashier-close').then(m => m.CashierClose)
+      },
+      {
         path: 'payments/:id',
         loadComponent: () => import('./payment-detail/payment-detail').then(m => m.PaymentDetail)
       }

@@ -25,7 +25,8 @@ export class AppSidebar {
     { label: 'Dashboard', icon: 'pi pi-th-large', route: '/dashboard' },
     { label: 'Proveedores', icon: 'pi pi-users', route: '/providers/locate' },
     { label: 'Pagos', icon: 'pi pi-wallet', route: '/payments/register' },
-    { label: 'Reportes', icon: 'pi pi-chart-bar', route: '/reports/detailed' }
+    { label: 'Reportes', icon: 'pi pi-chart-bar', route: '/reports/detailed' },
+    { label: 'Cierre de Caja', icon: 'pi pi-calculator', route: '/cashier-close' }
   ];
 
   constructor(

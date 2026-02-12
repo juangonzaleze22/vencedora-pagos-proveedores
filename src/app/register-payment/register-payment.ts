@@ -2,6 +2,7 @@ import { Component, signal, ViewChild, OnInit, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { parseLocalDate } from '../shared/utils/date.utils';
 import { AppHeader } from '../shared/components/layout/app-header/app-header';
 import { PageContainer } from '../shared/components/layout/page-container/page-container';
 import { AppCard } from '../shared/components/layout/app-card/app-card';
@@ -21,6 +22,7 @@ import { MessageService } from 'primeng/api';
 import { PaymentService } from '../shared/services/payment.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { SelectFilterService } from '../shared/services/select-filter.service';
+import { AuthContext } from '../contexts/auth.context';
 import { Provider } from '../shared/models/provider.model';
 
 @Component({
@@ -61,6 +63,7 @@ export class RegisterPayment implements OnInit {
   pageTitle = signal<string>('Registro de Pago');
   pageSubtitle = signal<string>('Ingrese los detalles del nuevo pago recibido');
   existingReceiptUrl = signal<string | undefined>(undefined);
+  existingReceiptUrls = signal<string[]>([]);
 
   paymentMethods = [
     { label: 'Zelle', value: 'Zelle' },
@@ -89,6 +92,7 @@ export class RegisterPayment implements OnInit {
     private supplierService: SupplierService,
     private messageService: MessageService,
     private location: Location,
+    private authContext: AuthContext,
     public selectFilter: SelectFilterService
   ) {
     this.paymentForm = this.fb.group({
@@ -167,9 +171,11 @@ export class RegisterPayment implements OnInit {
   }
 
   private populateFormWithPayment(payment: any) {
-    // Guardar la URL de la imagen existente si existe
-    if (payment.receiptFile) {
-      this.existingReceiptUrl.set(payment.receiptFile);
+    // Guardar las URLs de imágenes existentes si existen
+    if (payment.receiptFiles && payment.receiptFiles.length > 0) {
+      this.existingReceiptUrls.set(payment.receiptFiles);
+      // Compatibilidad: primera URL
+      this.existingReceiptUrl.set(payment.receiptFiles[0]);
     }
     
     // Cargar deudas del proveedor primero
@@ -181,7 +187,7 @@ export class RegisterPayment implements OnInit {
         correoEmisor: payment.senderEmail || '',
         numeroConfirmacion: payment.confirmationNumber || '',
         monto: payment.amount || '',
-        fechaEnvio: payment.paymentDate ? new Date(payment.paymentDate) : null,
+        fechaEnvio: payment.paymentDate ? parseLocalDate(payment.paymentDate) : null,
         proveedorId: payment.supplierId || '',
         debtId: payment.debtId || '',
         metodoPago: payment.paymentMethod || 'Zelle',
@@ -344,16 +350,24 @@ export class RegisterPayment implements OnInit {
         return;
       }
       
-      // Determinar qué enviar:
-      // - Si hay archivo seleccionado: enviar el File en receipt
-      // - Si había imagen existente y fue eliminada: enviar removeReceipt: true
-      // - Si había imagen existente y NO fue eliminada: no enviar nada (mantener existente)
-      let receiptFile: File | undefined = undefined;
+      // Leer archivos directamente del componente file-upload al momento del submit
+      let receiptFiles: File[] = [];
+      let existingReceiptFiles: string[] = [];
       let removeReceipt: boolean | undefined = undefined;
       
-      if (this.selectedFiles.length > 0 && this.selectedFiles[0] instanceof File) {
-        receiptFile = this.selectedFiles[0];
-      } else if (this.existingReceiptUrl() && this.fileUploadComponent?.imageExplicitlyRemoved?.()) {
+      // Obtener archivos nuevos directamente del componente (más confiable que el estado cacheado)
+      const filesFromComponent = this.fileUploadComponent?.getSelectedFiles() ?? [];
+      const filesFromState = this.selectedFiles.filter(f => f instanceof File);
+      receiptFiles = filesFromComponent.length > 0 ? filesFromComponent : filesFromState;
+      
+      // Obtener URLs de imágenes existentes que el usuario conservó (modo edición)
+      existingReceiptFiles = this.fileUploadComponent?.getExistingImageUrls() ?? [];
+      
+      // Verificar si las imágenes existentes fueron eliminadas (todas)
+      const hadExistingImages = this.existingReceiptUrls().length > 0 || !!this.existingReceiptUrl();
+      const allExistingRemoved = this.fileUploadComponent?.imageExplicitlyRemoved?.() ?? false;
+      
+      if (hadExistingImages && allExistingRemoved && receiptFiles.length === 0) {
         removeReceipt = true;
       }
       
@@ -366,10 +380,13 @@ export class RegisterPayment implements OnInit {
         senderEmail: formValue.correoEmisor,
         confirmationNumber: formValue.numeroConfirmacion,
         paymentDate: paymentDate,
-        receipt: receiptFile,
+        receiptFiles: receiptFiles,
+        existingReceiptFiles: existingReceiptFiles,
         removeReceipt: removeReceipt,
         // Campos de bolívares - siempre enviar isBolivares
-        isBolivares: Boolean(formValue.pagoEnBolivares)
+        isBolivares: Boolean(formValue.pagoEnBolivares),
+        // ID del usuario que registra el pago
+        createdBy: this.authContext.user()?.id
       };
 
       // Agregar campos de bolívares si el switch está activo
@@ -411,6 +428,7 @@ export class RegisterPayment implements OnInit {
             this.pagoEnBolivaresSignal.set(false);
             this.selectedFiles = [];
             this.existingReceiptUrl.set(undefined);
+            this.existingReceiptUrls.set([]);
             // Limpiar el componente de file upload
             if (this.fileUploadComponent) {
               this.fileUploadComponent.clear();

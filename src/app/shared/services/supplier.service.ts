@@ -4,6 +4,7 @@ import { ApiService } from './api.service';
 import { Provider, Debt, mapProviderFromAPI, mapProviderToAPI } from '../models/provider.model';
 import { Payment } from '../models/payment.model';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
+import { parseLocalDate, parseLocalDateOptional } from '../utils/date.utils';
 
 export interface SupplierListParams {
   search?: string;
@@ -122,7 +123,7 @@ export class SupplierService {
             ...response,
             data: response.data.map(debt => ({
               ...debt,
-              dueDate: new Date(debt.dueDate),
+              dueDate: parseLocalDate(debt.dueDate),
               createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
               updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined
             }))
@@ -174,8 +175,8 @@ export class SupplierService {
       paymentMethod: this.mapPaymentMethod(apiPayment.paymentMethod),
       senderName: apiPayment.senderName,
       confirmationNumber: apiPayment.confirmationNumber,
-      paymentDate: new Date(apiPayment.paymentDate),
-      receiptFile: apiPayment.receiptFile,
+      paymentDate: parseLocalDate(apiPayment.paymentDate),
+      receiptFiles: apiPayment.receiptFiles ?? (apiPayment.receiptFile ? [apiPayment.receiptFile] : []),
       verified: apiPayment.verified,
       createdBy: apiPayment.createdBy,
       createdAt: apiPayment.createdAt ? new Date(apiPayment.createdAt) : undefined,
