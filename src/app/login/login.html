@@ -4,15 +4,13 @@
   <!-- Main Card Container -->
   <div class="w-full max-w-[440px] bg-white dark:bg-card-dark rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-800 transition-colors duration-300">
     <!-- Decoration / Brand Header -->
-    <div class="h-2 w-full bg-primary"></div>
+    <div class="h-2 w-full bg-[#E95D27]"></div>
     
     <div class="p-8 sm:p-10 flex flex-col gap-8">
       <!-- Header Section -->
       <div class="flex flex-col items-center text-center gap-4">
         <!-- Logo Placeholder -->
-        <div class="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2">
-          <i class="pi pi-wallet text-4xl"></i>
-        </div>
+         <img src="images/logo.png" alt="Logo" class="h-auto w-48 mb-4">
         <div class="flex flex-col gap-1">
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Gestión de Pagos
@@ -88,7 +86,7 @@
             icon="pi pi-sign-in"
             [loading]="isLoading()"
             [disabled]="loginForm.invalid || isLoading()"
-            styleClass="w-full"
+            class="w-full btn-orange"
           />
         </div>
 
@@ -105,12 +103,12 @@
   <!-- Page Footer -->
   <div class="mt-8 text-center">
     <p class="text-xs text-slate-400 dark:text-slate-600 font-medium">
-      © 2024 Corporate Payment Systems. All rights reserved.
+      © 2026 Sistema de Gestión de pagos de proveedores. Ferretería La Vencedora.
     </p>
-    <div class="flex justify-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-600">
+ <!--    <div class="flex justify-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-600">
       <a class="hover:text-slate-600 dark:hover:text-slate-400" href="#">Privacy Policy</a>
       <span>•</span>
       <a class="hover:text-slate-600 dark:hover:text-slate-400" href="#">Terms of Service</a>
-    </div>
+    </div> -->
   </div>
 </div>
