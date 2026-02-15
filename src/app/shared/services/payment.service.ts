@@ -45,9 +45,6 @@ export class PaymentService {
       paymentDate = new Date(data.paymentDate);
     }
     
-    // Formatear fecha usando componentes locales (evita desplazamiento por timezone)
-    const dateStr = formatLocalDate(paymentDate);
-    
     // Mapear método de pago a formato API
     const paymentMethodAPI = mapPaymentMethodToAPI(data.paymentMethod);
     
@@ -59,7 +56,7 @@ export class PaymentService {
     formData.append('senderName', data.senderName);
     formData.append('senderEmail', data.senderEmail);
     formData.append('confirmationNumber', data.confirmationNumber);
-    formData.append('paymentDate', dateStr);
+    formData.append('paymentDate', paymentDate.toISOString());
     
     // ID del usuario que registra el pago
     if (data.createdBy !== undefined && data.createdBy !== null) {
@@ -250,9 +247,6 @@ export class PaymentService {
       paymentDate = new Date(data.paymentDate);
     }
     
-    // Formatear fecha usando componentes locales (evita desplazamiento por timezone)
-    const dateStr = formatLocalDate(paymentDate);
-    
     // Mapear método de pago a formato API
     const paymentMethodAPI = mapPaymentMethodToAPI(data.paymentMethod);
     
@@ -264,7 +258,7 @@ export class PaymentService {
     formData.append('senderName', data.senderName);
     formData.append('senderEmail', data.senderEmail);
     formData.append('confirmationNumber', data.confirmationNumber);
-    formData.append('paymentDate', dateStr);
+    formData.append('paymentDate', paymentDate.toISOString());
     
     formData.append('isBolivares', (data.isBolivares ?? false).toString());
     
@@ -530,6 +524,7 @@ export class PaymentService {
       shared: apiPayment.shared || false,
       sharedAt: apiPayment.sharedAt ? new Date(apiPayment.sharedAt) : undefined,
       createdBy: apiPayment.createdBy,
+      createdByUser: apiPayment.createdByUser,
       createdAt: apiPayment.createdAt ? new Date(apiPayment.createdAt) : undefined,
       updatedAt: apiPayment.updatedAt ? new Date(apiPayment.updatedAt) : undefined,
       // Campos de eliminación

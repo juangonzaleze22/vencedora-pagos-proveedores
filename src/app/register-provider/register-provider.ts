@@ -68,6 +68,7 @@ export class RegisterProvider implements OnInit {
       rif: ['', []],
       phone: [this.PHONE_EMPTY, [this.phoneValidator.bind(this)]],
       email: ['', [Validators.email]],
+      titulo: [''],
       deudaInicial: ['', [Validators.min(0.01)]],
       fechaDeuda: ['', []],
       diasCredito: [30, [Validators.min(0)]]
@@ -213,6 +214,9 @@ export class RegisterProvider implements OnInit {
           payload.initialDebtAmount = formValue.deudaInicial;
           payload.debtDate = formValue.fechaDeuda.toISOString().split('T')[0];
           payload.creditDays = formValue.diasCredito || 30;
+          if (formValue.titulo?.trim()) {
+            payload.title = formValue.titulo.trim();
+          }
         }
       }
 
@@ -238,6 +242,7 @@ export class RegisterProvider implements OnInit {
               rif: '',
               phone: this.PHONE_EMPTY,
               email: '',
+              titulo: '',
               deudaInicial: '',
               fechaDeuda: '',
               diasCredito: 30

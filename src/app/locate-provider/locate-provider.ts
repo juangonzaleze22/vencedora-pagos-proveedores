@@ -92,6 +92,7 @@ export class LocateProvider {
     private authContext: AuthContext
   ) {
     this.orderForm = this.fb.group({
+      title: [''],
       monto: ['', [Validators.required, Validators.min(0.01)]],
       fechaDespacho: ['', [Validators.required]],
       diasCredito: [30, [Validators.required, Validators.min(0)]]
@@ -339,8 +340,14 @@ export class LocateProvider {
       return;
     }
     this.orderService.getById(debt.orderId).subscribe({
+
+    
+
       next: (order) => {
+        console.log("deuda", order);
+
         this.orderForm.patchValue({
+          title: order.title ?? '',
           fechaDespacho: order.dispatchDate,
           diasCredito: order.creditDays,
           monto: order.amount
@@ -432,7 +439,7 @@ export class LocateProvider {
       this.loading.set(false);
       this.editingOrderId.set(null);
       this.fechaVencimiento.set(null);
-      this.orderForm.reset({ diasCredito: 30 });
+      this.orderForm.reset({ title: '', diasCredito: 30 });
       this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
         next: (report) => {
           this.selectedProvider.set(report.supplier);
@@ -444,6 +451,7 @@ export class LocateProvider {
 
     if (orderId !== null) {
       this.orderService.update(orderId, {
+        title: (formValue.title ?? '').trim(),
         dispatchDate,
         creditDays: formValue.diasCredito,
         amount: formValue.monto
@@ -468,6 +476,7 @@ export class LocateProvider {
     } else {
       this.orderService.create({
         supplierId: currentProvider.id,
+        title: formValue.title?.trim() || undefined,
         amount: formValue.monto,
         dispatchDate,
         creditDays: formValue.diasCredito
@@ -595,7 +604,7 @@ export class LocateProvider {
         this.debts.set([]);
         this.editingOrderId.set(null);
         this.fechaVencimiento.set(null);
-        this.orderForm.reset({ diasCredito: 30 });
+        this.orderForm.reset({ title: '', diasCredito: 30 });
         // Refrescar sugerencias del autocomplete para que no aparezcan proveedores eliminados
         this.onSearch(this.searchQuery);
         this.cdr.detectChanges();
@@ -633,14 +642,44 @@ export class LocateProvider {
     const debt = this.debtToDelete();
     this.debtToDelete.set(null);
     this.showConfirmDeleteDebt.set(false);
-    // De momento solo cerramos el modal; la eliminación por API se implementará después
-    if (debt) {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Eliminar deuda',
-        detail: 'La eliminación de deudas estará disponible próximamente.'
-      });
+    if (!debt?.id) {
+      return;
     }
+    const currentProvider = this.provider;
+    if (!currentProvider?.id) {
+      return;
+    }
+    this.loading.set(true);
+    this.supplierService.deleteDebt(debt.id).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Deuda eliminada correctamente.'
+        });
+        if (this.editingOrderId() !== null) {
+          this.editingOrderId.set(null);
+          this.fechaVencimiento.set(null);
+          this.orderForm.reset({ title: '', diasCredito: 30 });
+        }
+        this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
+          next: (report) => {
+            this.selectedProvider.set(report.supplier);
+            this.debts.set(report.debts || []);
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: (error) => {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.message || 'Error al eliminar la deuda.'
+        });
+      }
+    });
   }
 
   onCancelDeleteDebt(): void {

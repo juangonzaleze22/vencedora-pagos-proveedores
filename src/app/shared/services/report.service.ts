@@ -3,7 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { Provider, Debt } from '../models/provider.model';
 import { Payment, mapPaymentMethodFromAPI } from '../models/payment.model';
-import { parseLocalDate, parseLocalDateOptional } from '../utils/date.utils';
+import { parseLocalDate, parseLocalDateOptional, formatLocalDate } from '../utils/date.utils';
 
 export interface DashboardStats {
   pendingPayments: number;
@@ -65,11 +65,11 @@ export class ReportService {
     const params: Record<string, any> = {};
     
     if (startDate) {
-      params['startDate'] = startDate.toISOString().split('T')[0];
+      params['startDate'] = formatLocalDate(startDate);
     }
     
     if (endDate) {
-      params['endDate'] = endDate.toISOString().split('T')[0];
+      params['endDate'] = formatLocalDate(endDate);
     }
 
     return this.apiService.get<SupplierDetailedReport>(`/reports/supplier/${supplierId}/detailed`, params).pipe(
@@ -120,11 +120,11 @@ export class ReportService {
     };
     
     if (startDate) {
-      params['startDate'] = startDate.toISOString().split('T')[0];
+      params['startDate'] = formatLocalDate(startDate);
     }
     
     if (endDate) {
-      params['endDate'] = endDate.toISOString().split('T')[0];
+      params['endDate'] = formatLocalDate(endDate);
     }
 
     return this.apiService.get<Payment[]>(`/debts/${debtId}/payments`, params).pipe(

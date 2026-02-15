@@ -506,6 +506,12 @@ export class RegisterPayment implements OnInit {
     this.messageData.set(null);
   }
 
+  /** Título para mostrar en el dropdown: título de la deuda si existe, si no "Deuda". */
+  getDebtDisplayTitle(debt: any): string {
+    const t = debt?.title?.trim();
+    return t || 'Deuda';
+  }
+
   getSelectedDebtRemainingAmount(): number {
     const debtId = this.paymentForm.get('debtId')?.value;
     if (!debtId) return 0;

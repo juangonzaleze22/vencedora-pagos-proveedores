@@ -68,6 +68,7 @@ export class SupplierService {
     initialDebtAmount?: number;
     debtDate?: string;
     creditDays?: number;
+    title?: string;
   }): Observable<Provider> {
     return this.apiService.post<Provider>('/suppliers', data).pipe(
       map(response => {
@@ -104,6 +105,19 @@ export class SupplierService {
    */
   delete(id: number): Observable<void> {
     return this.apiService.delete<void>(`/suppliers/${id}`).pipe(
+      map(response => {
+        if (!response.success && response.message) {
+          throw new Error(response.message);
+        }
+      })
+    );
+  }
+
+  /**
+   * Elimina una deuda por ID (DELETE /api/debts/:id)
+   */
+  deleteDebt(debtId: number): Observable<void> {
+    return this.apiService.delete<void>(`/debts/${debtId}`).pipe(
       map(response => {
         if (!response.success && response.message) {
           throw new Error(response.message);
@@ -179,6 +193,7 @@ export class SupplierService {
       receiptFiles: apiPayment.receiptFiles ?? (apiPayment.receiptFile ? [apiPayment.receiptFile] : []),
       verified: apiPayment.verified,
       createdBy: apiPayment.createdBy,
+      createdByUser: apiPayment.createdByUser,
       createdAt: apiPayment.createdAt ? new Date(apiPayment.createdAt) : undefined,
       updatedAt: apiPayment.updatedAt ? new Date(apiPayment.updatedAt) : undefined
     };

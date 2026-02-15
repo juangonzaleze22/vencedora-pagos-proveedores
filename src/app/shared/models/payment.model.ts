@@ -27,6 +27,12 @@ export interface Payment {
   shared?: boolean;
   sharedAt?: Date;
   createdBy?: number;
+  /** Usuario que registró el pago (populado cuando la API incluye createdByUser) */
+  createdByUser?: {
+    id: number;
+    nombre: string;
+    email: string;
+  };
   createdAt?: Date;
   updatedAt?: Date;
   // Campos de eliminación (soft delete)

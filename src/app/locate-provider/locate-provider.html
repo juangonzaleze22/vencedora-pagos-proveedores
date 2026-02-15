@@ -140,7 +140,7 @@
                       <i class="pi pi-file text-primary text-base sm:text-xl"></i>
                     </div>
                     <div class="min-w-0">
-                      <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Deuda #{{ debt.id }}</h4>
+                      <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{{ debt.title ?  `${debt.title}  #${debt.id } ` : `Deuda #${debt.id } ` }}</h4>
                       <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold uppercase mt-0.5 sm:mt-1"
                         [ngClass]="{
                           'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300': debt.status === 'PENDING',
@@ -254,7 +254,7 @@
           }
 
           <!-- Botón Exportar Reporte -->
-          <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
+         <!--  <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
             <p-button
               label="Exportar Reporte"
               icon="pi pi-download"
@@ -262,7 +262,7 @@
               [loading]="isLoading"
               (onClick)="onExportReport()"
               class="w-full" />
-          </div>
+          </div> -->
         </app-app-card>
       </div>
 
@@ -283,6 +283,17 @@
 
         <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <form [formGroup]="orderForm" (ngSubmit)="onAddOrder()" class="space-y-4 sm:space-y-6">
+          <div>
+            <label class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-0.5 sm:mb-1" for="title">Título</label>
+            <input
+              id="title"
+              type="text"
+              pInputText
+              formControlName="title"
+              placeholder="Ej. Pedido enero 2025"
+              class="w-full" />
+          </div>
+
           <div>
             <label class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-0.5 sm:mb-1" for="dispatch-date">Fecha
               de Despacho</label>

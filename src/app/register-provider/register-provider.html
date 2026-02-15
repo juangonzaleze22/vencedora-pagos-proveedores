@@ -103,6 +103,19 @@
           @if (!isEditMode()) {
           <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">Información de Deuda</h3>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="debt_title">
+                Título
+              </label>
+              <input
+                id="debt_title"
+                type="text"
+                pInputText
+                formControlName="titulo"
+                placeholder="Ej. Deuda inicial, Pedido enero 2025"
+                class="w-full" />
+            </div>
             
             <!-- Primera fila: 3 columnas -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

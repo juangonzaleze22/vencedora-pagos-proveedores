@@ -7,12 +7,14 @@ import { parseLocalDate } from '../utils/date.utils';
 
 export interface CreateOrderData {
   supplierId: number;
+  title?: string;
   amount: number;
   dispatchDate: Date;
   creditDays: number;
 }
 
 export interface UpdateOrderData {
+  title?: string;
   dispatchDate: Date;
   creditDays: number;
   amount: number;
@@ -26,12 +28,15 @@ export class OrderService {
    * Crea un nuevo pedido
    */
   create(data: CreateOrderData): Observable<ProviderOrder> {
-    const payload = {
+    const payload: Record<string, unknown> = {
       supplierId: data.supplierId,
       amount: data.amount,
       dispatchDate: data.dispatchDate.toISOString().split('T')[0], // YYYY-MM-DD
       creditDays: data.creditDays
     };
+    if (data.title != null && data.title !== '') {
+      payload['title'] = data.title;
+    }
 
     return this.apiService.post<ProviderOrder>('/orders', payload).pipe(
       map(response => {
@@ -68,10 +73,11 @@ export class OrderService {
    * Actualiza un pedido existente (PUT /api/orders/:id)
    */
   update(id: number, data: UpdateOrderData): Observable<ProviderOrder> {
-    const payload = {
+    const payload: Record<string, unknown> = {
       dispatchDate: data.dispatchDate.toISOString().split('T')[0],
       creditDays: data.creditDays,
-      amount: data.amount
+      amount: data.amount,
+      title: data.title ?? ''
     };
 
     return this.apiService.put<ProviderOrder>(`/orders/${id}`, payload).pipe(
@@ -119,6 +125,7 @@ export class OrderService {
     return {
       id: apiOrder.id,
       supplierId: apiOrder.supplierId,
+      title: apiOrder.title ?? apiOrder.titulo ?? undefined,
       amount: apiOrder.amount,
       dispatchDate: parseLocalDate(apiOrder.dispatchDate),
       creditDays: apiOrder.creditDays,
@@ -134,6 +141,7 @@ export class OrderService {
     return {
       id: apiOrder.id,
       supplierId: apiOrder.supplierId,
+      title: apiOrder.title ?? apiOrder.titulo ?? undefined,
       supplier: apiOrder.supplier,
       amount: apiOrder.amount,
       dispatchDate: parseLocalDate(apiOrder.dispatchDate),

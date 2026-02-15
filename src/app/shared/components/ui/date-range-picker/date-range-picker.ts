@@ -61,8 +61,10 @@ export class DateRangePicker implements OnChanges {
         end = new Date(today);
         break;
       case 'month':
+        // Primer día del mes actual
         start = new Date(today.getFullYear(), today.getMonth(), 1);
-        end = new Date(today);
+        // Último día del mes actual (día 0 del mes siguiente = último día del mes)
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         break;
       case 'all':
         start = null;

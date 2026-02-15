@@ -31,6 +31,7 @@ import { SelectFilterService } from '../shared/services/select-filter.service';
 import { AuthContext } from '../contexts/auth.context';
 import { Payment } from '../shared/models/payment.model';
 import { Provider } from '../shared/models/provider.model';
+import { formatLocalDate } from '../shared/utils/date.utils';
 
 @Component({
   selector: 'app-payment-report',
@@ -138,7 +139,7 @@ export class PaymentReport implements OnInit {
   }
 
   private formatDateParam(date: Date): string {
-    return date.toISOString().split('T')[0];
+    return formatLocalDate(date);
   }
 
   private buildQueryParams(): Record<string, any> {
@@ -272,7 +273,7 @@ export class PaymentReport implements OnInit {
   debtOptions = computed(() => {
     return this.debts().map((d: any) => ({
       id: d.id,
-      label: `Deuda #${d.id}`,
+      label: `${this.getDebtDisplayTitle(d)} #${d.id}`,
       statusLabel: this.getStatusLabel(d.status),
       initialAmount: (d.initialAmount ?? 0).toFixed(2),
       remainingAmount: (d.remainingAmount ?? 0).toFixed(2),
@@ -566,6 +567,12 @@ export class PaymentReport implements OnInit {
   }
 
   // Método para traducir el status
+  /** Título para mostrar en listado: título de la deuda si existe, si no "Deuda". */
+  getDebtDisplayTitle(debt: any): string {
+    const t = debt?.title?.trim();
+    return t || 'Deuda';
+  }
+
   getStatusLabel(status: string): string {
     const statusMap: Record<string, string> = {
       'PENDING': 'Pendiente',

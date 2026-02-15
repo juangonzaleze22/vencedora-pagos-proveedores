@@ -81,6 +81,9 @@
                 Fecha de Envío
               </label>
               <p-datePicker
+                [showIcon]="true"
+                [showTime]="true"
+                [hourFormat]="'24'"
                 id="date"
                 formControlName="fechaEnvio"
                 [showIcon]="true"
@@ -184,20 +187,20 @@
               [optionLabel]="'id'"
               [optionValue]="'id'"
               [filter]="selectFilter.filterEnabled()"
-              filterBy="id"
+              filterBy="id,title"
               placeholder="Seleccione una deuda"
               [showClear]="true"
               styleClass="w-full">
               <ng-template let-debt pTemplate="item">
                 <div class="flex justify-between items-center">
-                  <span>Deuda #{{ debt.id }}</span>
-                  <span class="text-sm text-gray-500">$ {{ debt.remainingAmount.toFixed(2) }}</span>
+                  <span>{{ getDebtDisplayTitle(debt) }} #{{ debt.id }}</span>
+                  <span class="ml-1 text-sm text-gray-500"> $ {{ debt.remainingAmount.toFixed(2) }}</span>
                 </div>
               </ng-template>
               <ng-template let-debt pTemplate="selectedItem">
                 <div class="flex justify-between items-center w-full">
-                  <span>Deuda #{{ debt.id }}</span>
-                  <span class="text-sm text-gray-500">$ {{ debt.remainingAmount.toFixed(2) }}</span>
+                  <span>{{ getDebtDisplayTitle(debt) }} #{{ debt.id }}</span>
+                  <span class="ml-1 text-sm text-gray-500"> $ {{ debt.remainingAmount.toFixed(2) }}</span>
                 </div>
               </ng-template>
             </p-select>

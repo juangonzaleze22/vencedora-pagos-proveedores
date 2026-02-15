@@ -148,6 +148,19 @@
                 </p>
               </div>
             }
+            @if (paymentData.createdByUser) {
+              <div>
+                <p class="text-gray-500 dark:text-gray-400 mb-1">Registrado por</p>
+                <p class="font-semibold text-gray-900 dark:text-white">
+                  {{ paymentData.createdByUser.nombre }}
+                </p>
+                @if (paymentData.createdByUser.email) {
+                  <a [href]="'mailto:' + paymentData.createdByUser.email" class="text-xs text-primary hover:underline">
+                    {{ paymentData.createdByUser.email }}
+                  </a>
+                }
+              </div>
+            }
           </div>
         </div>
 

@@ -17,6 +17,7 @@ export interface Provider {
 export interface ProviderOrder {
   id: number;
   supplierId: number;
+  title?: string;
   amount: number;
   dispatchDate: Date;
   creditDays: number;
@@ -40,6 +41,8 @@ export interface Debt {
   orderId: number;
   supplierId: number;
   supplier?: Provider;
+  /** Título de la deuda (p. ej. de la orden). Si no existe, mostrar "Deuda". */
+  title?: string;
   initialAmount: number;
   remainingAmount: number;
   status: 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
