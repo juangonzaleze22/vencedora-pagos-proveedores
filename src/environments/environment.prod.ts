@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://mediumaquamarine-skunk-361715.hostingersite.com/api'
+  apiUrl: 'https://lightslategray-mosquito-805509.hostingersite.com/api'
 };
