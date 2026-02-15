@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://peachpuff-emu-510218.hostingersite.com/api'
+  apiUrl: 'https://purple-buffalo-141989.hostingersite.com/api'
 };
