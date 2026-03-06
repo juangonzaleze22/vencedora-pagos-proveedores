@@ -4,7 +4,7 @@ import { ApiService } from './api.service';
 import { Payment, PaymentVerification, mapPaymentMethodFromAPI, mapPaymentMethodToAPI } from '../models/payment.model';
 import { CashierPaymentsParams, CashierPaymentsResponse, CashierPaymentKPIs } from '../models/cashier.model';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
-import { parseLocalDate, parseLocalDateOptional, formatLocalDate } from '../utils/date.utils';
+import { parseLocalDate, parseLocalDateOptional, formatLocalDate, toLocalDateTimeAsUTCISOString } from '../utils/date.utils';
 
 export interface CreatePaymentData {
   debtId: number;
@@ -56,8 +56,8 @@ export class PaymentService {
     formData.append('senderName', data.senderName);
     formData.append('senderEmail', data.senderEmail);
     formData.append('confirmationNumber', data.confirmationNumber);
-    formData.append('paymentDate', paymentDate.toISOString());
-    
+    formData.append('paymentDate', toLocalDateTimeAsUTCISOString(paymentDate));
+
     // ID del usuario que registra el pago
     if (data.createdBy !== undefined && data.createdBy !== null) {
       formData.append('createdBy', data.createdBy.toString());
@@ -257,9 +257,9 @@ export class PaymentService {
     formData.append('paymentMethod', paymentMethodAPI);
     formData.append('senderName', data.senderName);
     formData.append('senderEmail', data.senderEmail);
-    formData.append('confirmationNumber', data.confirmationNumber);
-    formData.append('paymentDate', paymentDate.toISOString());
-    
+formData.append('confirmationNumber', data.confirmationNumber);
+    formData.append('paymentDate', toLocalDateTimeAsUTCISOString(paymentDate));
+
     formData.append('isBolivares', (data.isBolivares ?? false).toString());
     
     if (data.isBolivares) {

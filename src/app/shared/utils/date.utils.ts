@@ -61,3 +61,24 @@ export function formatLocalDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Formatea la fecha/hora LOCAL del usuario como ISO con sufijo "Z".
+ * Útil cuando el backend guarda la hora tal cual (sin convertir a UTC): así no se suman
+ * las horas del offset (ej. 10:00 local no se convierte en 14:00 en servidor).
+ * Ejemplo: 5 de marzo 2026 10:00 en UTC-4 → "2026-03-05T10:00:00.000Z"
+ *
+ * @param date - Objeto Date (hora local del usuario)
+ * @returns String "YYYY-MM-DDTHH:mm:ss.sssZ" con los números de fecha/hora locales
+ */
+export function toLocalDateTimeAsUTCISOString(date: Date): string {
+  const pad = (n: number, len = 2) => String(n).padStart(len, '0');
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  const h = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  const s = pad(date.getSeconds());
+  const ms = pad(date.getMilliseconds(), 3);
+  return `${y}-${m}-${d}T${h}:${min}:${s}.${ms}Z`;
+}
