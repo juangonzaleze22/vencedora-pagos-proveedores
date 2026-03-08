@@ -15,14 +15,18 @@ export interface CreatePaymentData {
   senderEmail: string;
   confirmationNumber: string;
   paymentDate: Date;
-  receipt?: File; // File para nuevo archivo (compatibilidad)
-  receiptFiles?: File[]; // Array de Files para múltiples archivos
-  existingReceiptFiles?: string[]; // URLs de imágenes existentes a conservar (modo edición)
-  removeReceipt?: boolean; // true para eliminar la imagen existente
-  isBolivares?: boolean; // Switch BS/USD
-  exchangeRate?: number; // Tasa del dólar
-  amountInBolivares?: number; // Monto en bolívares
-  createdBy?: number; // ID del usuario que registra el pago
+  receipt?: File;
+  receiptFiles?: File[];
+  existingReceiptFiles?: string[];
+  removeReceipt?: boolean;
+  isBolivares?: boolean;
+  exchangeRate?: number;
+  amountInBolivares?: number;
+  createdBy?: number;
+  // Campos de excedente
+  surplusAmount?: number;
+  surplusAction?: 'CREDIT' | 'APPLY_TO_DEBT';
+  surplusTargetDebtId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +80,15 @@ export class PaymentService {
       }
     }
     
+    // Campos de excedente
+    if (data.surplusAmount && data.surplusAmount > 0) {
+      formData.append('surplusAmount', data.surplusAmount.toString());
+      formData.append('surplusAction', data.surplusAction || 'CREDIT');
+      if (data.surplusAction === 'APPLY_TO_DEBT' && data.surplusTargetDebtId) {
+        formData.append('surplusTargetDebtId', data.surplusTargetDebtId.toString());
+      }
+    }
+
     // Enviar múltiples archivos: cada uno con el mismo campo 'receipt'
     if (data.receiptFiles && data.receiptFiles.length > 0) {
       data.receiptFiles.forEach((file) => {
@@ -539,7 +552,8 @@ formData.append('confirmationNumber', data.confirmationNumber);
       // Si viene el flag o si hay datos de bolívares, asumimos que es pago en bolívares
       isBolivares: apiPayment.isBolivares || !!(apiPayment.exchangeRate || apiPayment.amountInBolivares),
       exchangeRate: apiPayment.exchangeRate,
-      amountInBolivares: apiPayment.amountInBolivares
+      amountInBolivares: apiPayment.amountInBolivares,
+      surplusAmount: apiPayment.surplusAmount || 0
     };
   }
 }

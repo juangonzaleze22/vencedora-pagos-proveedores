@@ -49,6 +49,8 @@ export interface Payment {
   isBolivares?: boolean;
   exchangeRate?: number; // Tasa del dólar en BS
   amountInBolivares?: number; // Monto en bolívares
+  // Campos de excedente
+  surplusAmount?: number;
 }
 
 export interface PaymentVerification {

@@ -106,6 +106,18 @@
                     }
                   </div>
 
+            @if (provider!.totalCreditAvailable && provider!.totalCreditAvailable > 0) {
+              <div class="p-3 sm:p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800/30">
+                <label class="block text-[10px] sm:text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-0.5 sm:mb-1">
+                  Saldo a Favor
+                </label>
+                <div class="text-xl sm:text-2xl font-bold font-mono text-blue-700 dark:text-blue-400">
+                  $ {{ provider!.totalCreditAvailable!.toFixed(2) }}
+                </div>
+                <p class="text-[10px] sm:text-xs text-blue-500 mt-0.5 sm:mt-1">Crédito disponible por excedentes</p>
+              </div>
+            }
+
             <div class="grid grid-cols-2 gap-3 sm:gap-6">
               <div class="min-w-0">
                 <label class="block text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1">
@@ -221,6 +233,15 @@
                     </div>
                   </div>
                 </div>
+
+                @if ((debt.surplusAmountApplied ?? 0) > 0) {
+                <div class="mt-2 sm:mt-3 flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 px-3 py-2">
+                  <i class="pi pi-wallet text-blue-600 dark:text-blue-400 text-sm shrink-0"></i>
+                  <p class="text-[10px] sm:text-xs text-blue-700 dark:text-blue-300">
+                    Saldo excedente aplicado: <span class="font-semibold">$ {{ (debt.surplusAmountApplied ?? 0).toFixed(2) }}</span>
+                  </p>
+                </div>
+                }
 
                 <!-- Botón Ver Detalles -->
                 @if (debt.orderId) {
@@ -352,6 +373,43 @@
             <small class="text-red-600">El monto es requerido</small>
             }
           </div>
+
+          @if (!editingOrderId() && (provider && (provider.totalCreditAvailable ?? 0) > 0)) {
+          <div>
+            <label class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-0.5 sm:mb-1" for="surplus-apply">Saldo excedente a aplicar ($)</label>
+            <div class="flex gap-2 items-stretch w-full">
+              <p-iconfield iconPosition="left" class="flex-1 min-w-0">
+                <p-inputicon>
+                  <span class="text-gray-500 dark:text-gray-400 font-bold">$</span>
+                </p-inputicon>
+                <p-inputNumber
+                  id="surplus-apply"
+                  formControlName="surplusAmountToApply"
+                  mode="decimal"
+                  [min]="0"
+                  [max]="getMaxSurplusToApply()"
+                  [minFractionDigits]="2"
+                  [maxFractionDigits]="2"
+                  placeholder="0.00"
+                  styleClass="w-full" />
+              </p-iconfield>
+              <p-button
+                type="button"
+                label="max"
+                severity="secondary"
+                (onClick)="onApplyMaxSurplus()"
+                [disabled]="getMaxSurplusToApply() <= 0"
+                [pTooltip]="'Aplicar todo el saldo a favor disponible'"
+                tooltipPosition="top" />
+            </div>
+            <p class="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+              Disponible: $ {{ (provider!.totalCreditAvailable ?? 0).toFixed(2) }}. Máximo a aplicar: mínimo entre el monto de la deuda y el saldo a favor.
+            </p>
+            @if (orderForm.get('surplusAmountToApply')?.invalid && orderForm.get('surplusAmountToApply')?.touched) {
+            <small class="text-red-600">El valor debe ser mayor o igual a 0 y no superar el máximo permitido</small>
+            }
+          </div>
+          }
 
           <div class="pt-3 sm:pt-4 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <p-button label="Cancelar" severity="secondary" (onClick)="onCancel()" />

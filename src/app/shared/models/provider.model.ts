@@ -9,6 +9,7 @@ export interface Provider {
   email?: string;
   status: 'PENDING' | 'COMPLETED';
   totalDebt: number;
+  totalCreditAvailable?: number;
   lastPaymentDate?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -51,6 +52,8 @@ export interface Debt {
   updatedAt?: Date;
   payments?: Payment[];
   debtNumber?: number;
+  /** Monto de saldo excedente (crédito) aplicado a esta deuda al crearla. Enviado por el backend si está disponible. */
+  surplusAmountApplied?: number;
 }
 
 // Helper para mapear desde API
@@ -63,6 +66,7 @@ export function mapProviderFromAPI(apiProvider: any): Provider {
     email: apiProvider.email,
     status: apiProvider.status,
     totalDebt: apiProvider.totalDebt,
+    totalCreditAvailable: apiProvider.totalCreditAvailable || 0,
     lastPaymentDate: parseLocalDateOptional(apiProvider.lastPaymentDate),
     createdAt: apiProvider.createdAt ? new Date(apiProvider.createdAt) : undefined,
     updatedAt: apiProvider.updatedAt ? new Date(apiProvider.updatedAt) : undefined

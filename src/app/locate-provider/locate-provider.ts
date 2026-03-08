@@ -95,11 +95,29 @@ export class LocateProvider {
       title: [''],
       monto: ['', [Validators.required, Validators.min(0.01)]],
       fechaDespacho: ['', [Validators.required]],
-      diasCredito: [30, [Validators.required, Validators.min(0)]]
+      diasCredito: [30, [Validators.required, Validators.min(0)]],
+      surplusAmountToApply: [null as number | null, [Validators.min(0)]]
     });
 
     this.orderForm.get('fechaDespacho')?.valueChanges.subscribe(() => this.calculateDueDate());
     this.orderForm.get('diasCredito')?.valueChanges.subscribe(() => this.calculateDueDate());
+  }
+
+  /** Máximo saldo excedente que se puede aplicar: mínimo entre monto de la deuda y saldo a favor del proveedor */
+  getMaxSurplusToApply(): number {
+    const provider = this.provider;
+    const available = provider?.totalCreditAvailable ?? 0;
+    if (available <= 0) return 0;
+    const amount = this.orderForm.get('monto')?.value;
+    const num = amount != null && amount !== '' ? Number(amount) : 0;
+    return Math.min(num, available);
+  }
+
+  /** Rellena el campo de excedente a aplicar con el máximo permitido */
+  onApplyMaxSurplus(): void {
+    const max = this.getMaxSurplusToApply();
+    this.orderForm.patchValue({ surplusAmountToApply: max });
+    this.cdr.markForCheck();
   }
 
   private calculateDueDate(): void {
@@ -192,7 +210,10 @@ export class LocateProvider {
     // Obtener información completa del distribuidor con todas sus deudas
     this.reportService.getSupplierDetailed(supplier.id).subscribe({
       next: (report) => {
-        this.selectedProvider.set(report.supplier);
+        this.selectedProvider.set({
+          ...report.supplier,
+          totalCreditAvailable: report.totalCreditAvailable || 0
+        });
         this.debts.set(report.debts || []);
         
         this.loading.set(false);
@@ -350,7 +371,8 @@ export class LocateProvider {
           title: order.title ?? '',
           fechaDespacho: order.dispatchDate,
           diasCredito: order.creditDays,
-          monto: order.amount
+          monto: order.amount,
+          surplusAmountToApply: null
         });
         this.editingOrderId.set(order.id);
         this.calculateDueDate();
@@ -439,10 +461,13 @@ export class LocateProvider {
       this.loading.set(false);
       this.editingOrderId.set(null);
       this.fechaVencimiento.set(null);
-      this.orderForm.reset({ title: '', diasCredito: 30 });
+      this.orderForm.reset({ title: '', diasCredito: 30, surplusAmountToApply: null });
       this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
         next: (report) => {
-          this.selectedProvider.set(report.supplier);
+          this.selectedProvider.set({
+            ...report.supplier,
+            totalCreditAvailable: report.totalCreditAvailable || 0
+          });
           this.debts.set(report.debts || []);
           this.cdr.detectChanges();
         }
@@ -474,12 +499,24 @@ export class LocateProvider {
         }
       });
     } else {
+      const surplus = formValue.surplusAmountToApply != null && formValue.surplusAmountToApply !== '' ? Number(formValue.surplusAmountToApply) : 0;
+      const maxSurplus = this.getMaxSurplusToApply();
+      if (surplus > maxSurplus) {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Valor no permitido',
+          detail: `El saldo excedente a aplicar no puede ser mayor a $ ${maxSurplus.toFixed(2)} (mínimo entre el monto de la deuda y el saldo a favor del proveedor).`
+        });
+        return;
+      }
       this.orderService.create({
         supplierId: currentProvider.id,
         title: formValue.title?.trim() || undefined,
         amount: formValue.monto,
         dispatchDate,
-        creditDays: formValue.diasCredito
+        creditDays: formValue.diasCredito,
+        ...(surplus > 0 && { surplusAmountToApply: surplus })
       }).subscribe({
         next: () => {
           this.messageService.add({
@@ -504,7 +541,7 @@ export class LocateProvider {
   onCancel() {
     this.editingOrderId.set(null);
     this.fechaVencimiento.set(null);
-    this.orderForm.reset({ diasCredito: 30 });
+    this.orderForm.reset({ diasCredito: 30, surplusAmountToApply: null });
   }
 
   onBackToDashboard() {
@@ -604,7 +641,7 @@ export class LocateProvider {
         this.debts.set([]);
         this.editingOrderId.set(null);
         this.fechaVencimiento.set(null);
-        this.orderForm.reset({ title: '', diasCredito: 30 });
+        this.orderForm.reset({ title: '', diasCredito: 30, surplusAmountToApply: null });
         // Refrescar sugerencias del autocomplete para que no aparezcan proveedores eliminados
         this.onSearch(this.searchQuery);
         this.cdr.detectChanges();
@@ -665,7 +702,10 @@ export class LocateProvider {
         }
         this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
           next: (report) => {
-            this.selectedProvider.set(report.supplier);
+            this.selectedProvider.set({
+              ...report.supplier,
+              totalCreditAvailable: report.totalCreditAvailable || 0
+            });
             this.debts.set(report.debts || []);
             this.cdr.detectChanges();
           }

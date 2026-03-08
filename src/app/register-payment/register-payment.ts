@@ -1,6 +1,6 @@
 import { Component, signal, ViewChild, OnInit, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { parseLocalDate } from '../shared/utils/date.utils';
 import { AppHeader } from '../shared/components/layout/app-header/app-header';
@@ -23,13 +23,14 @@ import { PaymentService } from '../shared/services/payment.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { SelectFilterService } from '../shared/services/select-filter.service';
 import { AuthContext } from '../contexts/auth.context';
-import { Provider } from '../shared/models/provider.model';
+import { Provider, Debt } from '../shared/models/provider.model';
 
 @Component({
   selector: 'app-register-payment',
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     AppHeader,
     PageContainer,
     AppCard,
@@ -74,11 +75,26 @@ export class RegisterPayment implements OnInit {
   // Signal para rastrear el estado del switch pagoEnBolivares
   pagoEnBolivaresSignal = signal<boolean>(false);
 
+  // Manejo de excedente: siempre se aplica como saldo a favor (CREDIT)
+  private currentMonto = signal<number>(0);
+  private currentDebtId = signal<number | null>(null);
+
+  surplusAmount = computed(() => {
+    const amount = this.currentMonto();
+    const debtId = this.currentDebtId();
+    if (!debtId || amount <= 0) return 0;
+    const selectedDebt = this.debts().find(d => d.id === debtId);
+    const remaining = selectedDebt?.remainingAmount || 0;
+    if (remaining > 0 && amount > remaining) {
+      return +(amount - remaining).toFixed(2);
+    }
+    return 0;
+  });
+
   // Computed signal para filtrar métodos de pago según el switch bs/usd
   filteredPaymentMethods = computed(() => {
     const pagoEnBolivares = this.pagoEnBolivaresSignal();
     if (pagoEnBolivares) {
-      // Si está en bolívares, excluir Zelle
       return this.paymentMethods.filter(method => method.value !== 'Zelle');
     }
     return this.paymentMethods;
@@ -99,19 +115,23 @@ export class RegisterPayment implements OnInit {
       emisor: ['', [Validators.required]],
       correoEmisor: ['', [Validators.required, Validators.email]],
       numeroConfirmacion: ['', [Validators.required]],
-      monto: ['', [Validators.required, Validators.min(0.01), this.amountNotExceedingDebtValidator.bind(this)]],
+      monto: ['', [Validators.required, Validators.min(0.01)]],
       fechaEnvio: [new Date(), [Validators.required]],
       proveedorId: ['', [Validators.required]],
       debtId: ['', [Validators.required]],
       metodoPago: ['Zelle', [Validators.required]],
       pagoEnBolivares: [false],
       tasaDolar: ['', []],
-      montoBolivares: ['', []]
+      montoBolivares: ['', []],
     });
 
-    // Actualizar validación del monto cuando cambie la deuda
-    this.paymentForm.get('debtId')?.valueChanges.subscribe(() => {
-      this.paymentForm.get('monto')?.updateValueAndValidity();
+    // Sincronizar valores del formulario con signals para reactividad del excedente
+    this.paymentForm.get('debtId')?.valueChanges.subscribe((debtId) => {
+      this.currentDebtId.set(debtId ? Number(debtId) : null);
+    });
+
+    this.paymentForm.get('monto')?.valueChanges.subscribe((monto) => {
+      this.currentMonto.set(Number(monto) || 0);
     });
 
     // Lógica reactiva para el método de pago (ocultar/validar número de confirmación)
@@ -202,37 +222,6 @@ export class RegisterPayment implements OnInit {
       // Actualizar validación del monto
       this.paymentForm.get('monto')?.updateValueAndValidity();
     });
-  }
-
-  /**
-   * Validador personalizado: el monto no debe exceder el monto restante de la deuda
-   */
-  private amountNotExceedingDebtValidator(control: AbstractControl): ValidationErrors | null {
-    const amount = control.value;
-    const debtId = this.paymentForm?.get('debtId')?.value;
-
-    if (!amount || !debtId) {
-      return null; // No validar si no hay monto o deuda seleccionada
-    }
-
-    const selectedDebt = this.debts().find(d => d.id === debtId);
-    if (!selectedDebt) {
-      return null; // No validar si la deuda no se encuentra
-    }
-
-    const remainingAmount = selectedDebt.remainingAmount || 0;
-    const amountValue = Number(amount);
-
-    if (amountValue > remainingAmount) {
-      return {
-        amountExceedsDebt: {
-          maxAmount: remainingAmount,
-          enteredAmount: amountValue
-        }
-      };
-    }
-
-    return null;
   }
 
   private loadProviders(callback?: () => void) {
@@ -383,11 +372,16 @@ export class RegisterPayment implements OnInit {
         receiptFiles: receiptFiles,
         existingReceiptFiles: existingReceiptFiles,
         removeReceipt: removeReceipt,
-        // Campos de bolívares - siempre enviar isBolivares
         isBolivares: Boolean(formValue.pagoEnBolivares),
-        // ID del usuario que registra el pago
         createdBy: this.authContext.user()?.id
       };
+
+      // Excedente: siempre se envía como saldo a favor (CREDIT)
+      const surplus = this.surplusAmount();
+      if (surplus > 0) {
+        paymentData.surplusAmount = surplus;
+        paymentData.surplusAction = 'CREDIT';
+      }
 
       // Agregar campos de bolívares si el switch está activo
       if (formValue.pagoEnBolivares) {
@@ -424,8 +418,10 @@ export class RegisterPayment implements OnInit {
               tasaDolar: '',
               montoBolivares: ''
             });
-            // Sincronizar el signal
+            // Sincronizar signals
             this.pagoEnBolivaresSignal.set(false);
+            this.currentMonto.set(0);
+            this.currentDebtId.set(null);
             this.selectedFiles = [];
             this.existingReceiptUrl.set(undefined);
             this.existingReceiptUrls.set([]);
@@ -585,8 +581,7 @@ export class RegisterPayment implements OnInit {
         this.paymentForm.get('montoBolivares')?.clearValidators();
         this.paymentForm.get('monto')?.setValidators([
           Validators.required,
-          Validators.min(0.01),
-          this.amountNotExceedingDebtValidator.bind(this)
+          Validators.min(0.01)
         ]);
         
         // Limpiar campos de bolívares
@@ -626,13 +621,12 @@ export class RegisterPayment implements OnInit {
 
     if (tasaDolar && montoBolivares && tasaDolar > 0 && montoBolivares > 0) {
       const montoCalculado = montoBolivares / tasaDolar;
-      // Actualizar el monto sin disparar eventos para evitar loops
       this.paymentForm.patchValue({ monto: montoCalculado }, { emitEvent: false });
-      // Actualizar validación del monto
+      this.currentMonto.set(montoCalculado);
       this.paymentForm.get('monto')?.updateValueAndValidity();
     } else {
-      // Si faltan valores, limpiar el monto
       this.paymentForm.patchValue({ monto: '' }, { emitEvent: false });
+      this.currentMonto.set(0);
     }
   }
 }

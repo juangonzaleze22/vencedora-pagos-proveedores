@@ -278,7 +278,8 @@ export class PaymentReport implements OnInit {
       initialAmount: (d.initialAmount ?? 0).toFixed(2),
       remainingAmount: (d.remainingAmount ?? 0).toFixed(2),
       dueDate: d.dueDate,
-      activePayments: this.getActivePaymentsCount(d)
+      activePayments: this.getActivePaymentsCount(d),
+      surplusAmountApplied: d.surplusAmountApplied ?? 0
     }));
   });
 

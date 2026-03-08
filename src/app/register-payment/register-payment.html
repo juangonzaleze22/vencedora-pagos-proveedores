@@ -264,7 +264,7 @@
               Monto en USD
               @if (getSelectedDebtRemainingAmount() > 0 && !paymentForm.get('pagoEnBolivares')?.value) {
                 <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">
-                  (Máx: ${{ getSelectedDebtRemainingAmount().toFixed(2) }})
+                  (Deuda: ${{ getSelectedDebtRemainingAmount().toFixed(2) }})
                 </span>
               }
             </label>
@@ -284,15 +284,30 @@
                 styleClass="w-full" />
             </p-iconfield>
             @if (paymentForm.get('monto')?.invalid && paymentForm.get('monto')?.touched) {
-              @if (paymentForm.get('monto')?.errors?.['amountExceedsDebt']) {
-                <small class="text-red-600">
-                  El monto no puede exceder ${{ paymentForm.get('monto')?.errors?.['amountExceedsDebt'].maxAmount.toFixed(2) }}
-                </small>
-              } @else {
-                <small class="text-red-600">El monto es requerido y debe ser mayor a 0</small>
-              }
+              <small class="text-red-600">El monto es requerido y debe ser mayor a 0</small>
             }
           </div>
+
+          <!-- Sección de Excedente (informativa: siempre saldo a favor) -->
+          @if (surplusAmount() > 0) {
+            <div class="rounded-lg border border-amber-400/60 bg-amber-50 dark:border-amber-600/50 dark:bg-amber-950/40 p-4">
+              <div class="flex gap-3">
+                <i class="pi pi-info-circle text-amber-600 dark:text-amber-400 text-xl shrink-0 mt-0.5" aria-hidden="true"></i>
+                <div class="min-w-0 space-y-2">
+                  <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    Excedente detectado: ${{ surplusAmount() | number:'1.2-2' }}
+                  </p>
+                  <p class="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                    El pago de ${{ (paymentForm.get('monto')?.value | number:'1.2-2') }} excede la deuda de ${{ getSelectedDebtRemainingAmount() | number:'1.2-2' }}.
+                    Se aplicarán ${{ getSelectedDebtRemainingAmount() | number:'1.2-2' }} a la deuda seleccionada.
+                  </p>
+                  <p class="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                    El excedente se dejará como saldo a favor (disponible para futuras deudas).
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Columna derecha: Adjuntar Comprobante -->

@@ -11,6 +11,8 @@ export interface CreateOrderData {
   amount: number;
   dispatchDate: Date;
   creditDays: number;
+  /** Saldo excedente (créditos) a aplicar a esta deuda. Opcional, ≥ 0, ≤ amount y ≤ saldo disponible del proveedor */
+  surplusAmountToApply?: number;
 }
 
 export interface UpdateOrderData {
@@ -36,6 +38,9 @@ export class OrderService {
     };
     if (data.title != null && data.title !== '') {
       payload['title'] = data.title;
+    }
+    if (data.surplusAmountToApply != null && data.surplusAmountToApply > 0) {
+      payload['surplusAmountToApply'] = data.surplusAmountToApply;
     }
 
     return this.apiService.post<ProviderOrder>('/orders', payload).pipe(

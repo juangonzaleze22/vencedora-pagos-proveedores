@@ -18,6 +18,7 @@ export interface SupplierDetailedReport {
   paymentCount: number;
   averagePayment: number;
   debts: Debt[];
+  totalCreditAvailable?: number;
 }
 
 export interface DebtPaymentsResponse {
@@ -75,26 +76,27 @@ export class ReportService {
     return this.apiService.get<SupplierDetailedReport>(`/reports/supplier/${supplierId}/detailed`, params).pipe(
       map(response => {
         if (response.success && response.data) {
-          const data = response.data;
+          const data = response.data as any;
+          const s = data.supplier || {};
+          const credit = data.totalCreditAvailable ?? s.totalCreditAvailable ?? 0;
           return {
             supplier: {
-              id: data.supplier.id,
-              companyName: data.supplier.companyName,
-              taxId: data.supplier.taxId,
-              status: data.supplier.status,
-              totalDebt: data.supplier.totalDebt,
-              lastPaymentDate: parseLocalDateOptional(data.supplier.lastPaymentDate),
-              createdAt: data.supplier.createdAt ? new Date(data.supplier.createdAt) : undefined,
-              updatedAt: data.supplier.updatedAt ? new Date(data.supplier.updatedAt) : undefined
-            },
+              ...s,
+              totalCreditAvailable: credit,
+              lastPaymentDate: parseLocalDateOptional(s.lastPaymentDate),
+              createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
+              updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined
+            } as Provider,
+            totalCreditAvailable: credit,
             totalPaid: data.totalPaid,
             paymentCount: data.paymentCount,
             averagePayment: data.averagePayment,
-            debts: data.debts.map(debt => ({
+            debts: (data.debts || []).map((debt: any) => ({
               ...debt,
               dueDate: parseLocalDate(debt.dueDate),
               createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
-              updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined
+              updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined,
+              surplusAmountApplied: debt.surplusAmountAtCreation ?? debt.surplusAmountApplied ?? debt.surplusApplied ?? debt.appliedSurplus ?? 0
             }))
           };
         }
