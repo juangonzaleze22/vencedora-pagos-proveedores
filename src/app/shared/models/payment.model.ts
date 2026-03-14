@@ -51,6 +51,8 @@ export interface Payment {
   amountInBolivares?: number; // Monto en bolívares
   // Campos de excedente
   surplusAmount?: number;
+  /** Nota u observación del pago */
+  nota?: string;
 }
 
 export interface PaymentVerification {

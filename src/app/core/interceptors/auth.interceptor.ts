@@ -1,10 +1,12 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
+  const messageService = inject(MessageService);
   
   // Obtener token del localStorage
   const token = localStorage.getItem('token');
@@ -37,6 +39,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Manejar errores de autenticación
       if (error.status === 401) {
         // Token inválido o expirado
+        messageService.add({
+          severity: 'warn',
+          summary: 'Sesión expirada',
+          detail: 'Su token ha expirado. Por favor, inicie sesión nuevamente.'
+        });
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         router.navigate(['/login']);

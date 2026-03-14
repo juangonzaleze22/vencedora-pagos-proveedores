@@ -27,6 +27,7 @@ export interface CreatePaymentData {
   surplusAmount?: number;
   surplusAction?: 'CREDIT' | 'APPLY_TO_DEBT';
   surplusTargetDebtId?: number;
+  nota?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,6 +70,11 @@ export class PaymentService {
     
     // Campos de bolívares - siempre enviar isBolivares
     formData.append('isBolivares', (data.isBolivares ?? false).toString());
+
+    // Nota opcional del pago
+    if (data.nota != null && data.nota !== '') {
+      formData.append('nota', String(data.nota).trim());
+    }
     
     // Si está en bolívares, agregar tasa y monto en bolívares
     if (data.isBolivares) {
@@ -274,6 +280,10 @@ formData.append('confirmationNumber', data.confirmationNumber);
     formData.append('paymentDate', toLocalDateTimeAsUTCISOString(paymentDate));
 
     formData.append('isBolivares', (data.isBolivares ?? false).toString());
+
+    if (data.nota != null && data.nota !== '') {
+      formData.append('nota', String(data.nota).trim());
+    }
     
     if (data.isBolivares) {
       if (data.exchangeRate !== undefined && data.exchangeRate !== null) {
@@ -553,7 +563,8 @@ formData.append('confirmationNumber', data.confirmationNumber);
       isBolivares: apiPayment.isBolivares || !!(apiPayment.exchangeRate || apiPayment.amountInBolivares),
       exchangeRate: apiPayment.exchangeRate,
       amountInBolivares: apiPayment.amountInBolivares,
-      surplusAmount: apiPayment.surplusAmount || 0
+      surplusAmount: apiPayment.surplusAmount || 0,
+      nota: apiPayment.nota
     };
   }
 }

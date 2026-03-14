@@ -288,6 +288,20 @@
             }
           </div>
 
+          <!-- Nota -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="nota">
+              Nota
+            </label>
+            <textarea
+              id="nota"
+              pTextarea
+              formControlName="nota"
+              placeholder="Observaciones o comentarios del pago (opcional)"
+              rows="3"
+              class="w-full"></textarea>
+          </div>
+
           <!-- Sección de Excedente (informativa: siempre saldo a favor) -->
           @if (surplusAmount() > 0) {
             <div class="rounded-lg border border-amber-400/60 bg-amber-50 dark:border-amber-600/50 dark:bg-amber-950/40 p-4">

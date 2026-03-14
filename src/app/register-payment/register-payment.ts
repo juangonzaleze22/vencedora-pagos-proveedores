@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { TextareaModule } from 'primeng/textarea';
 import { MessageService } from 'primeng/api';
 import { PaymentService } from '../shared/services/payment.service';
 import { SupplierService } from '../shared/services/supplier.service';
@@ -45,7 +46,8 @@ import { Provider, Debt } from '../shared/models/provider.model';
     ButtonModule,
     ToastModule,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    TextareaModule
   ],
   providers: [MessageService],
   templateUrl: './register-payment.html',
@@ -123,6 +125,7 @@ export class RegisterPayment implements OnInit {
       pagoEnBolivares: [false],
       tasaDolar: ['', []],
       montoBolivares: ['', []],
+      nota: [''],
     });
 
     // Sincronizar valores del formulario con signals para reactividad del excedente
@@ -213,7 +216,8 @@ export class RegisterPayment implements OnInit {
         metodoPago: payment.paymentMethod || 'Zelle',
         pagoEnBolivares: pagoEnBolivares,
         tasaDolar: payment.exchangeRate || '',
-        montoBolivares: payment.amountInBolivares || ''
+        montoBolivares: payment.amountInBolivares || '',
+        nota: payment.nota || ''
       });
 
       // Actualizar el signal
@@ -373,7 +377,8 @@ export class RegisterPayment implements OnInit {
         existingReceiptFiles: existingReceiptFiles,
         removeReceipt: removeReceipt,
         isBolivares: Boolean(formValue.pagoEnBolivares),
-        createdBy: this.authContext.user()?.id
+        createdBy: this.authContext.user()?.id,
+        nota: formValue.nota?.trim() || undefined,
       };
 
       // Excedente: siempre se envía como saldo a favor (CREDIT)
@@ -416,7 +421,8 @@ export class RegisterPayment implements OnInit {
               numeroConfirmacion: '',
               pagoEnBolivares: false,
               tasaDolar: '',
-              montoBolivares: ''
+              montoBolivares: '',
+              nota: ''
             });
             // Sincronizar signals
             this.pagoEnBolivaresSignal.set(false);
