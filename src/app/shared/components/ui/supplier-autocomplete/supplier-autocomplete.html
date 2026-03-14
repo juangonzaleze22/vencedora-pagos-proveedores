@@ -29,7 +29,7 @@
       @for (supplier of suggestions; track supplier.id) {
         <div
           class="px-3 py-2.5 sm:px-4 sm:py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-          [class.bg-primary/10]="selectedIndex === $index"
+          [class.bg-primary-10]="selectedIndex === $index"
           [class.bg-gray-50]="selectedIndex === $index"
           [class.dark:bg-gray-700]="selectedIndex === $index"
           (click)="selectSupplier(supplier)"
@@ -41,7 +41,7 @@
               </div>
               <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
                 @if (supplier.taxId) {
-                  <span class="text-gray-500 dark:text-gray-400">RIF: <span class="text-gray-700 dark:text-gray-300">{{ supplier.taxId }}</span></span>
+                  <span class="text-gray-500 dark:text-gray-400">Id Zelle: <span class="text-gray-700 dark:text-gray-300">{{ supplier.taxId }}</span></span>
                 }
                 <span class="text-gray-400 dark:text-gray-500">•</span>
                 <span class="text-gray-600 dark:text-gray-400">Deuda: <span class="text-red-500 dark:text-red-400">${{ supplier.totalDebt.toFixed(2) }}</span></span>
