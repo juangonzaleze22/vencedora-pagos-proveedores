@@ -63,13 +63,8 @@ export class LocateProvider {
   selectedProvider = signal<Provider | null>(null);
   debts = signal<Debt[]>([]);
   
-  totalDebt = computed(() => {
-    const debts = this.debts();
-    if (debts.length === 0 && this.selectedProvider()) {
-      return this.selectedProvider()?.totalDebt || 0;
-    }
-    return debts.reduce((sum, debt) => sum + (debt.remainingAmount || 0), 0);
-  });
+  /** Total de deuda según el backend (reporte detallado / proveedor seleccionado). */
+  totalDebt = computed(() => this.selectedProvider()?.totalDebt ?? 0);
 
   orderForm: FormGroup;
   loading = signal<boolean>(false);

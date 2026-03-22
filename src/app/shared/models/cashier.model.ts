@@ -7,37 +7,27 @@ export interface CashierInfo {
   rol: string;
 }
 
-export interface PaymentMethodBreakdown {
+/** Agregados del cierre de caja devueltos por el backend (`summary`). */
+export interface CashierPaymentMethodSummary {
   count: number;
-  totalAmount: number;
+  totalUsd: number;
 }
 
-export interface CashierPaymentKPIs {
+export interface CashierSessionSummary {
   totalPayments: number;
-  totalAmount: number;
-  totalAmountInBolivares: number;
-  averagePaymentAmount: number;
+  totalAmountUsd: number;
+  totalAmountBs: number;
+  providersServed: number;
   byPaymentMethod: {
-    ZELLE: PaymentMethodBreakdown;
-    TRANSFER: PaymentMethodBreakdown;
-    CASH: PaymentMethodBreakdown;
+    ZELLE: CashierPaymentMethodSummary;
+    TRANSFER: CashierPaymentMethodSummary;
+    CASH: CashierPaymentMethodSummary;
   };
-  byStatus: {
-    verified: number;
-    unverified: number;
-    shared: number;
-    deleted: number;
-  };
-  dateRange: {
-    firstPayment: Date | string | null;
-    lastPayment: Date | string | null;
-  };
-  suppliersServed: number;
 }
 
 export interface CashierPaymentsResponse {
   cashier: CashierInfo;
-  kpis: CashierPaymentKPIs;
+  summary: CashierSessionSummary;
   payments: Payment[];
   pagination: {
     page: number;

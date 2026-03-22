@@ -9,7 +9,7 @@ import { AuthContext } from '../contexts/auth.context';
 import { PaymentService } from '../shared/services/payment.service';
 import { UserService, UserListItem } from '../shared/services/user.service';
 import { Payment } from '../shared/models/payment.model';
-import { CashierPaymentKPIs, CashierInfo, CashierPaymentsParams } from '../shared/models/cashier.model';
+import { CashierSessionSummary, CashierInfo, CashierPaymentsParams } from '../shared/models/cashier.model';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -55,9 +55,8 @@ export class CashierClose implements OnInit {
   cashiers = signal<UserListItem[]>([]);
   selectedCashierId = signal<number | null>(null);
 
-  // KPIs y datos
   cashierInfo = signal<CashierInfo | null>(null);
-  kpis = signal<CashierPaymentKPIs | null>(null);
+  summary = signal<CashierSessionSummary | null>(null);
   payments = signal<Payment[]>([]);
 
   // Paginación
@@ -83,7 +82,7 @@ export class CashierClose implements OnInit {
   ];
 
   // Computed
-  hasData = computed(() => !!this.kpis());
+  hasData = computed(() => !!this.summary());
 
   isCajero = computed(() => this.authContext.hasRole('CAJERO'));
 
@@ -207,7 +206,7 @@ export class CashierClose implements OnInit {
     this.paymentService.getPaymentsByCashier(cashierId, params).subscribe({
       next: (response) => {
         this.cashierInfo.set(response.cashier);
-        this.kpis.set(response.kpis);
+        this.summary.set(response.summary);
         this.payments.set(response.payments);
         this.totalRecords.set(response.pagination.total);
         this.loading.set(false);

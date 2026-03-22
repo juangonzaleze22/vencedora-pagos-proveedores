@@ -124,7 +124,7 @@
               </p-inputicon>
               <input
                 id="correoEmisor"
-                type="email"
+                type="text"
                 pInputText
                 formControlName="correoEmisor"
                 placeholder="Seleccione un proveedor"
@@ -133,9 +133,7 @@
             </p-iconfield>
             @if (paymentForm.get('correoEmisor')?.invalid && paymentForm.get('correoEmisor')?.touched) {
               @if (paymentForm.get('correoEmisor')?.errors?.['required']) {
-                <small class="text-red-600">El correo es requerido</small>
-              } @else if (paymentForm.get('correoEmisor')?.errors?.['email']) {
-                <small class="text-red-600">El correo no es válido</small>
+                <small class="text-red-600">Este campo es requerido</small>
               }
             }
           </div>

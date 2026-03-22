@@ -1,6 +1,6 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AppHeader } from '../shared/components/layout/app-header/app-header';
 import { PageContainer } from '../shared/components/layout/page-container/page-container';
@@ -50,10 +50,6 @@ export class RegisterProvider implements OnInit {
   pageSubtitle = signal<string>('Ingrese la información del nuevo proveedor y sus deudas pendientes');
   providerId = signal<number | null>(null);
 
-  /** Máscara de teléfono venezolano: (+58) 0XXX XXX-XXXX */
-  readonly PHONE_MASK_PREFIX = '(+58) ';
-  readonly PHONE_EMPTY = '(+58) ';
-
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -66,8 +62,8 @@ export class RegisterProvider implements OnInit {
     this.providerForm = this.fb.group({
       nombre: ['', [Validators.required]],
       rif: ['', []],
-      phone: [this.PHONE_EMPTY, [this.phoneValidator.bind(this)]],
-      email: ['', [Validators.email]],
+      phone: ['', []],
+      email: ['', []],
       titulo: [''],
       deudaInicial: ['', [Validators.min(0.01)]],
       fechaDeuda: ['', []],
@@ -80,18 +76,20 @@ export class RegisterProvider implements OnInit {
   }
 
   /**
-   * Aplica la máscara (+58) 0XXX XXX-XXXX. Solo dígitos tras el prefijo (máx. 11).
+   * Normaliza a E.164 (+ y hasta 15 dígitos). Vacío → null.
+   * El usuario indica el código de país (con + o solo dígitos).
    */
-  
-
-
-  /** Valor con máscara para mostrar; si solo está el prefijo se considera vacío. */
   private getPhoneForPayload(phoneValue: string | null | undefined): string | null {
-    const raw = (phoneValue ?? '').replace(/\D/g, '').replace(/^58/, '');
-    if (raw.length === 0) return null;
-    const digits = raw[0] === '0' ? raw.slice(1) : raw;
-    if (digits.length < 10) return null;
-    return '+58' + digits.slice(0, 10);
+    const trimmed = (phoneValue ?? '').trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('+')) {
+      const digits = trimmed.slice(1).replace(/\D/g, '');
+      if (digits.length === 0) return null;
+      return '+' + digits.slice(0, 15);
+    }
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length === 0) return null;
+    return '+' + digits.slice(0, 15);
   }
 
   ngOnInit() {
@@ -151,11 +149,6 @@ export class RegisterProvider implements OnInit {
   }
 
 
-  /** Validador de teléfono: opcional; la máscara se encarga del formato. */
-  phoneValidator(_control: AbstractControl): ValidationErrors | null {
-    return null;
-  }
-
   get isLoading() {
     return this.loading();
   }
@@ -193,7 +186,7 @@ export class RegisterProvider implements OnInit {
         // taxId es opcional - incluir si tiene valor, o null si se borró
         payload.taxId = formValue.rif && formValue.rif.trim() !== '' ? formValue.rif : null;
         
-        // phone es opcional - incluir si tiene más que solo +58, o null si se borró
+        // phone es opcional
         payload.phone = this.getPhoneForPayload(formValue.phone);
         payload.email = formValue.email && formValue.email.trim() !== '' ? formValue.email.trim() : null;
       } else {
@@ -240,7 +233,7 @@ export class RegisterProvider implements OnInit {
             this.providerForm.reset({
               nombre: '',
               rif: '',
-              phone: this.PHONE_EMPTY,
+              phone: '',
               email: '',
               titulo: '',
               deudaInicial: '',

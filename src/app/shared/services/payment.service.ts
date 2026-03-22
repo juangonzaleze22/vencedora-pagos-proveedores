@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map, catchError, throwError, of } from 'rxjs';
 import { ApiService } from './api.service';
 import { Payment, PaymentVerification, mapPaymentMethodFromAPI, mapPaymentMethodToAPI } from '../models/payment.model';
-import { CashierPaymentsParams, CashierPaymentsResponse, CashierPaymentKPIs } from '../models/cashier.model';
+import { CashierPaymentsParams, CashierPaymentsResponse, CashierSessionSummary } from '../models/cashier.model';
 import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
 import { parseLocalDate, parseLocalDateOptional, formatLocalDate, toLocalDateTimeAsUTCISOString } from '../utils/date.utils';
 
@@ -405,8 +405,7 @@ formData.append('confirmationNumber', data.confirmationNumber);
 
   /**
    * Obtiene pagos procesados por un cajero específico.
-   * El backend devuelve { data: Payment[], pagination } (estructura plana).
-   * Los KPIs se calculan en el frontend a partir de todos los pagos recibidos.
+   * El backend devuelve pagos paginados y un objeto `summary` con totales agregados.
    * @param cashierId ID del cajero
    * @param params Filtros opcionales (paginación, fechas, método de pago, etc.)
    */
@@ -426,12 +425,10 @@ formData.append('confirmationNumber', data.confirmationNumber);
     return this.apiService.get<any>(`/payments/cashier/${cashierId}`, queryParams).pipe(
       map((response: any) => {
         if (response.success) {
-          // El backend devuelve: { success, data: Payment[], pagination }
           const rawPayments: any[] = response.data || [];
           const payments = rawPayments.map((p: any) => this.mapPaymentFromAPI(p));
           const pagination = response.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 };
 
-          // Extraer info del cajero del primer pago (si existe createdByUser)
           const firstWithUser = rawPayments.find((p: any) => p.createdByUser);
           const cashier = firstWithUser?.createdByUser
             ? {
@@ -442,10 +439,9 @@ formData.append('confirmationNumber', data.confirmationNumber);
               }
             : { id: cashierId, nombre: '', email: '', rol: 'CAJERO' };
 
-          // Calcular KPIs a partir de los pagos recibidos
-          const kpis = this.calculateKPIs(payments);
+          const summary = this.mapCashierSummaryFromAPI(response.summary ?? response.sumary);
 
-          return { cashier, kpis, payments, pagination };
+          return { cashier, summary, payments, pagination };
         }
         throw new Error(response.message || 'Error al obtener pagos del cajero');
       }),
@@ -458,63 +454,36 @@ formData.append('confirmationNumber', data.confirmationNumber);
     );
   }
 
-  /**
-   * Calcula KPIs a partir de un array de pagos ya mapeados.
-   */
-  private calculateKPIs(payments: Payment[]): CashierPaymentKPIs {
-    const activePayments = payments.filter(p => !p.deleted);
-
-    const totalPayments = activePayments.length;
-    const totalAmount = activePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const totalAmountInBolivares = activePayments
-      .filter(p => p.isBolivares && p.amountInBolivares)
-      .reduce((sum, p) => sum + (p.amountInBolivares || 0), 0);
-    const averagePaymentAmount = totalPayments > 0 ? totalAmount / totalPayments : 0;
-
-    const byPaymentMethod = {
-      ZELLE: { count: 0, totalAmount: 0 },
-      TRANSFER: { count: 0, totalAmount: 0 },
-      CASH: { count: 0, totalAmount: 0 }
-    };
-
-    for (const p of activePayments) {
-      const key = p.paymentMethod === 'Zelle' ? 'ZELLE'
-        : p.paymentMethod === 'Transferencia' ? 'TRANSFER'
-        : 'CASH';
-      byPaymentMethod[key].count++;
-      byPaymentMethod[key].totalAmount += p.amount || 0;
-    }
-
-    const byStatus = {
-      verified: payments.filter(p => p.verified && !p.deleted).length,
-      unverified: payments.filter(p => !p.verified && !p.deleted).length,
-      shared: payments.filter(p => p.shared && !p.deleted).length,
-      deleted: payments.filter(p => p.deleted).length
-    };
-
-    // Rango de fechas
-    const dates = activePayments
-      .map(p => p.paymentDate)
-      .filter(d => d instanceof Date && !isNaN(d.getTime()))
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    const dateRange = {
-      firstPayment: dates.length > 0 ? dates[0] : null,
-      lastPayment: dates.length > 0 ? dates[dates.length - 1] : null
-    };
-
-    // Proveedores distintos
-    const supplierIds = new Set(activePayments.map(p => p.supplierId).filter(Boolean));
-
+  private emptyCashierSessionSummary(): CashierSessionSummary {
+    const z = { count: 0, totalUsd: 0 };
     return {
-      totalPayments,
-      totalAmount,
-      totalAmountInBolivares,
-      averagePaymentAmount,
-      byPaymentMethod,
-      byStatus,
-      dateRange,
-      suppliersServed: supplierIds.size
+      totalPayments: 0,
+      totalAmountUsd: 0,
+      totalAmountBs: 0,
+      providersServed: 0,
+      byPaymentMethod: { ZELLE: { ...z }, TRANSFER: { ...z }, CASH: { ...z } }
+    };
+  }
+
+  private mapCashierSummaryFromAPI(raw: any): CashierSessionSummary {
+    if (!raw || typeof raw !== 'object') {
+      return this.emptyCashierSessionSummary();
+    }
+    const bpm = raw.byPaymentMethod || {};
+    const method = (key: 'ZELLE' | 'TRANSFER' | 'CASH') => ({
+      count: Number(bpm[key]?.count) || 0,
+      totalUsd: Number(bpm[key]?.totalUsd) || 0
+    });
+    return {
+      totalPayments: Number(raw.totalPayments) || 0,
+      totalAmountUsd: Number(raw.totalAmountUsd) || 0,
+      totalAmountBs: Number(raw.totalAmountBs) || 0,
+      providersServed: Number(raw.providersServed) || 0,
+      byPaymentMethod: {
+        ZELLE: method('ZELLE'),
+        TRANSFER: method('TRANSFER'),
+        CASH: method('CASH')
+      }
     };
   }
 

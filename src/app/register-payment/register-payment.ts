@@ -115,7 +115,7 @@ export class RegisterPayment implements OnInit {
   ) {
     this.paymentForm = this.fb.group({
       emisor: ['', [Validators.required]],
-      correoEmisor: ['', [Validators.required, Validators.email]],
+      correoEmisor: ['', [Validators.required]],
       numeroConfirmacion: ['', [Validators.required]],
       monto: ['', [Validators.required, Validators.min(0.01)]],
       fechaEnvio: [new Date(), [Validators.required]],

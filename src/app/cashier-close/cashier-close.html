@@ -148,22 +148,22 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <app-stat-card
         label="Total de Pagos"
-        [value]="formatNumber(kpis()?.totalPayments)"
+        [value]="formatNumber(summary()?.totalPayments)"
         icon="pi pi-receipt"
         iconColor="blue" />
       <app-stat-card
         label="Monto Total (USD)"
-        [value]="formatCurrency(kpis()?.totalAmount)"
+        [value]="formatCurrency(summary()?.totalAmountUsd)"
         icon="pi pi-dollar"
         iconColor="green" />
       <app-stat-card
         label="Monto Total (Bs)"
-        [value]="formatBolivares(kpis()?.totalAmountInBolivares)"
+        [value]="formatBolivares(summary()?.totalAmountBs)"
         icon="pi pi-money-bill"
         iconColor="orange" />
       <app-stat-card
         label="Proveedores Atendidos"
-        [value]="formatNumber(kpis()?.suppliersServed)"
+        [value]="formatNumber(summary()?.providersServed)"
         icon="pi pi-users"
         iconColor="yellow" />
     </div>
@@ -183,11 +183,11 @@
               </div>
               <div>
                 <p class="font-medium text-gray-900 dark:text-white text-sm">Zelle</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ kpis()?.byPaymentMethod?.ZELLE?.count || 0 }} pagos</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ summary()?.byPaymentMethod?.ZELLE?.count || 0 }} pagos</p>
               </div>
             </div>
             <span class="font-semibold text-blue-700 dark:text-blue-300">
-              {{ formatCurrency(kpis()?.byPaymentMethod?.ZELLE?.totalAmount) }}
+              {{ formatCurrency(summary()?.byPaymentMethod?.ZELLE?.totalUsd) }}
             </span>
           </div>
 
@@ -199,11 +199,11 @@
               </div>
               <div>
                 <p class="font-medium text-gray-900 dark:text-white text-sm">Transferencia</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ kpis()?.byPaymentMethod?.TRANSFER?.count || 0 }} pagos</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ summary()?.byPaymentMethod?.TRANSFER?.count || 0 }} pagos</p>
               </div>
             </div>
             <span class="font-semibold text-purple-700 dark:text-purple-300">
-              {{ formatCurrency(kpis()?.byPaymentMethod?.TRANSFER?.totalAmount) }}
+              {{ formatCurrency(summary()?.byPaymentMethod?.TRANSFER?.totalUsd) }}
             </span>
           </div>
 
@@ -215,11 +215,11 @@
               </div>
               <div>
                 <p class="font-medium text-gray-900 dark:text-white text-sm">Efectivo</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ kpis()?.byPaymentMethod?.CASH?.count || 0 }} pagos</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ summary()?.byPaymentMethod?.CASH?.count || 0 }} pagos</p>
               </div>
             </div>
             <span class="font-semibold text-green-700 dark:text-green-300">
-              {{ formatCurrency(kpis()?.byPaymentMethod?.CASH?.totalAmount) }}
+              {{ formatCurrency(summary()?.byPaymentMethod?.CASH?.totalUsd) }}
             </span>
           </div>
         </div>

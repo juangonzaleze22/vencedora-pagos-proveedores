@@ -56,7 +56,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="phone">
-                Teléfono de Contacto asd
+                Teléfono de Contacto
               </label>
               <p-iconfield iconPosition="left" class="w-full">
                 <p-inputicon>
@@ -67,19 +67,18 @@
                   type="tel"
                   pInputText
                   formControlName="phone"
-                  placeholder="(000) 000-0000"
-                  mask="(000) 000-0000"
+                  placeholder="Ej. +58 414 1234567 o +1 234 567 8900"
                   class="w-full" />
               </p-iconfield>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <i class="pi pi-info-circle mr-1"></i>
-                Formato: (+58) 0XXX XXX-XXXX. Listo para compartir por WhatsApp.
+                Incluya el código de país (ej. +58, +1). Útil para compartir por WhatsApp.
               </p>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="email">
-                Correo electrónico
+                Email o ID
               </label>
               <p-iconfield iconPosition="left" class="w-full">
                 <p-inputicon>
@@ -87,15 +86,12 @@
                 </p-inputicon>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   pInputText
                   formControlName="email"
-                  placeholder="contacto&#64;empresa.com"
+                  placeholder="contacto&#64;empresa.com o ID"
                   class="w-full" />
               </p-iconfield>
-              @if (providerForm.get('email')?.invalid && providerForm.get('email')?.touched) {
-                <small class="text-red-600">Ingrese un correo válido</small>
-              }
             </div>
           </div>
 
