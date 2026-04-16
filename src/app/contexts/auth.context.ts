@@ -55,4 +55,16 @@ export class AuthContext {
   hasRole(role: string): boolean {
     return this.authService.hasRole(role);
   }
+
+  /** Etiqueta del rol para UI (p. ej. navbar / sidebar), a partir de `user.role.nombre`. */
+  get roleLabel(): string {
+    const user = this.authService.currentUser();
+    const raw = user?.role?.nombre?.trim();
+    if (!raw) return 'Usuario';
+    return raw
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
 }

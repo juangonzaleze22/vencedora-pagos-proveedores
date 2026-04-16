@@ -39,7 +39,7 @@
       </div>
       <div class="ml-3 flex-1">
         <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ userName }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Supervisor</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ authContext.roleLabel }}</p>
       </div>
     </div>
     <button 
@@ -120,7 +120,7 @@
         </div>
         <div class="ml-3 flex-1">
           <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ userName }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Supervisor</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ authContext.roleLabel }}</p>
         </div>
       </div>
       <button 
