@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SupplierService } from '../shared/services/supplier.service';
 import { Provider } from '../shared/models/provider.model';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-supplier-list',
@@ -26,7 +27,8 @@ import { Provider } from '../shared/models/provider.model';
     ButtonModule,
     TagModule,
     ToastModule,
-    DatePipe
+    DatePipe,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './supplier-list.html',

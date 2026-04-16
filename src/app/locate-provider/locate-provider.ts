@@ -26,6 +26,8 @@ import { Provider, Debt } from '../shared/models/provider.model';
 import { Location } from '@angular/common';
 import { ConfirmDialog } from '../shared/components/ui/confirm-dialog/confirm-dialog';
 import { AuthContext } from '../contexts/auth.context';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
+import { formatUsd } from '../shared/utils/format-usd';
 
 @Component({
   selector: 'app-locate-provider',
@@ -49,7 +51,8 @@ import { AuthContext } from '../contexts/auth.context';
     IconFieldModule,
     InputIconModule,
     DatePipe,
-    ConfirmDialog
+    ConfirmDialog,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './locate-provider.html',
@@ -501,7 +504,7 @@ export class LocateProvider {
         this.messageService.add({
           severity: 'warn',
           summary: 'Valor no permitido',
-          detail: `El saldo excedente a aplicar no puede ser mayor a $ ${maxSurplus.toFixed(2)} (mínimo entre el monto de la deuda y el saldo a favor del proveedor).`
+          detail: `El saldo excedente a aplicar no puede ser mayor a ${formatUsd(maxSurplus)} (mínimo entre el monto de la deuda y el saldo a favor del proveedor).`
         });
         return;
       }

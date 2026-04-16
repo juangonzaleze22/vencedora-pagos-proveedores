@@ -7,11 +7,12 @@ import { OrderService } from '../../../services/order.service';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { AppCard } from '../../layout/app-card/app-card';
+import { FormatUsdPipe } from '../../../pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-order-detail-dialog',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, ToastModule, AppCard],
+  imports: [CommonModule, DialogModule, ButtonModule, ToastModule, AppCard, FormatUsdPipe],
   providers: [MessageService],
   templateUrl: './order-detail-dialog.html',
   styleUrl: './order-detail-dialog.scss'

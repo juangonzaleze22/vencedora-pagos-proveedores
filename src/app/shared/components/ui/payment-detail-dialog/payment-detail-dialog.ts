@@ -8,11 +8,12 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { AppCard } from '../../layout/app-card/app-card';
 import { LazyImage } from '../lazy-image/lazy-image';
+import { FormatUsdPipe } from '../../../pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-detail-dialog',
   standalone: true,
-  imports: [CommonModule, DialogModule, ButtonModule, ToastModule, AppCard, LazyImage],
+  imports: [CommonModule, DialogModule, ButtonModule, ToastModule, AppCard, LazyImage, FormatUsdPipe],
   providers: [MessageService],
   templateUrl: './payment-detail-dialog.html',
   styleUrl: './payment-detail-dialog.scss'

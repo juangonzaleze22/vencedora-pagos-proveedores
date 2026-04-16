@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PaymentService } from '../shared/services/payment.service';
 import { Payment, PaymentVerification as PaymentVerificationResult } from '../shared/models/payment.model';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-verification',
@@ -24,7 +25,8 @@ import { Payment, PaymentVerification as PaymentVerificationResult } from '../sh
     PaymentStatusBadge,
     PaymentAutocomplete,
     ButtonModule,
-    ToastModule
+    ToastModule,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './payment-verification.html',

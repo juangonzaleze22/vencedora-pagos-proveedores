@@ -7,6 +7,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { Provider } from '../../../models/provider.model';
+import { FormatUsdPipe } from '../../../pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-supplier-autocomplete',
@@ -18,7 +19,8 @@ import { Provider } from '../../../models/provider.model';
     IconFieldModule,
     InputIconModule,
     ButtonModule,
-    TagModule
+    TagModule,
+    FormatUsdPipe
   ],
   templateUrl: './supplier-autocomplete.html',
   styleUrl: './supplier-autocomplete.scss'

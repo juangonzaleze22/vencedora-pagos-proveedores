@@ -77,14 +77,14 @@
               <div class="grid grid-cols-2 py-4 border-b border-gray-50 dark:border-gray-800/50">
                 <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Monto Restante</p>
                 <p class="text-red-600 dark:text-red-400 text-sm font-bold">
-                  $ {{ orderData.debt.remainingAmount.toFixed(2) }}
+                  {{ orderData.debt.remainingAmount | formatUsd }}
                 </p>
               </div>
             }
             
             <div class="grid grid-cols-2 py-5 bg-primary/5 dark:bg-primary/10 -mx-6 px-6 mt-2">
               <p class="text-primary text-sm font-bold">Monto Total</p>
-              <p class="text-primary text-xl font-black leading-none">$ {{ orderData.amount.toFixed(2) }}</p>
+              <p class="text-primary text-xl font-black leading-none">{{ orderData.amount | formatUsd }}</p>
             </div>
           </div>
         </app-app-card>
@@ -139,19 +139,19 @@
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Monto Inicial:</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                      $ {{ orderData.amount.toFixed(2) }}
+                      {{ orderData.amount | formatUsd }}
                     </span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Monto Restante:</span>
                     <span class="text-sm font-semibold text-red-600 dark:text-red-400">
-                      $ {{ orderData.debt.remainingAmount.toFixed(2) }}
+                      {{ orderData.debt.remainingAmount | formatUsd }}
                     </span>
                   </div>
                   <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">Pagado:</span>
                     <span class="text-sm font-bold text-green-600 dark:text-green-400">
-                      $ {{ (orderData.amount - orderData.debt.remainingAmount).toFixed(2) }}
+                      {{ (orderData.amount - orderData.debt.remainingAmount) | formatUsd }}
                     </span>
                   </div>
                 </div>

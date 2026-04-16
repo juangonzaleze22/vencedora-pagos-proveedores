@@ -10,6 +10,7 @@ import { AppHeader } from '../shared/components/layout/app-header/app-header';
 import { PageContainer } from '../shared/components/layout/page-container/page-container';
 import { AppCard } from '../shared/components/layout/app-card/app-card';
 import { LazyImage } from '../shared/components/ui/lazy-image/lazy-image';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-detail',
@@ -21,7 +22,8 @@ import { LazyImage } from '../shared/components/ui/lazy-image/lazy-image';
     AppHeader,
     PageContainer,
     AppCard,
-    LazyImage
+    LazyImage,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './payment-detail.html',

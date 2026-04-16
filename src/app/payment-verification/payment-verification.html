@@ -60,7 +60,7 @@
                     <div>
                       <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monto Recibido</p>
                       <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                        $ {{ payment.amount.toFixed(2) }}
+                        {{ payment.amount | formatUsd }}
                       </p>
                     </div>
                   </div>
@@ -116,7 +116,7 @@
                           }
                           @if (payment.debt.initialAmount !== undefined) {
                             <p class="text-xs text-gray-500 dark:text-gray-500">
-                              Monto de deuda: <span class="font-semibold">$ {{ payment.debt.initialAmount.toFixed(2) }}</span>
+                              Monto de deuda: <span class="font-semibold">{{ payment.debt.initialAmount | formatUsd }}</span>
                             </p>
                           }
                         </div>

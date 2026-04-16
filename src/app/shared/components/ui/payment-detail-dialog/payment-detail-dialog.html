@@ -122,7 +122,7 @@
             <div class="grid grid-cols-2 py-5 bg-primary/5 dark:bg-primary/10 -mx-6 px-6 mt-2">
               <p class="text-primary text-sm font-bold">Monto Total</p>
               <div class="flex flex-col gap-1">
-                <p class="text-primary text-xl font-black leading-none">$ {{ paymentData.amount.toFixed(2) }} USD</p>
+                <p class="text-primary text-xl font-black leading-none">{{ paymentData.amount | formatUsd }} USD</p>
                 @if (paymentData.isBolivares && paymentData.amountInBolivares) {
                   <p class="text-xs text-gray-500 dark:text-gray-400">
                     Bs {{ paymentData.amountInBolivares | number:'1.2-2' }}

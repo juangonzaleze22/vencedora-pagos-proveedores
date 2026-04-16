@@ -76,7 +76,7 @@
                       </label>
                       <div [ngClass]="totalDebt() > 0 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'" 
                         class="text-3xl font-bold font-mono">
-                        $ {{ totalDebt().toFixed(2) }}
+                        {{ totalDebt() | formatUsd }}
                       </div>
                       @if (totalDebt() > 0) {
                         <p class="text-xs text-red-500 mt-1">Requiere atención</p>
@@ -91,7 +91,7 @@
                         Saldo a Favor
                       </label>
                       <div class="text-2xl font-bold font-mono text-blue-700 dark:text-blue-400">
-                        $ {{ (reportData()?.totalCreditAvailable ?? 0).toFixed(2) }}
+                        {{ (reportData()?.totalCreditAvailable ?? 0) | formatUsd }}
                       </div>
                       <p class="text-xs text-blue-500 mt-1">Crédito disponible por excedentes</p>
                     </div>
@@ -122,15 +122,15 @@
                             <span class="text-xs text-slate-500 dark:text-slate-400">{{ option.statusLabel }}</span>
                             <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                               <span>Inicial:</span>
-                              <span class="font-medium">$ {{ option.initialAmount }}</span>
+                              <span class="font-medium">{{ option.initialAmount | formatUsd }}</span>
                               <span>Restante:</span>
-                              <span class="font-semibold text-red-600 dark:text-red-400">$ {{ option.remainingAmount }}</span>
+                              <span class="font-semibold text-red-600 dark:text-red-400">{{ option.remainingAmount | formatUsd }}</span>
                               <span>Vencimiento:</span>
                               <span>{{ option.dueDate | date:'dd/MM/yyyy' }}</span>
                               <span>Pagos Activos:</span>
                               <span>{{ option.activePayments }}</span>
                               @if (option.surplusAmountApplied > 0) {
-                              <span class="col-span-2 text-blue-600 dark:text-blue-400 text-xs mt-0.5">Saldo excedente aplicado: $ {{ option.surplusAmountApplied.toFixed(2) }}</span>
+                              <span class="col-span-2 text-blue-600 dark:text-blue-400 text-xs mt-0.5">Saldo excedente aplicado: {{ option.surplusAmountApplied | formatUsd }}</span>
                               }
                             </div>
                           </div>
@@ -197,7 +197,7 @@
                                 <i class="pi pi-dollar text-slate-300 dark:text-slate-500 mt-1"></i>
                                 <div>
                                   <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Inicial</p>
-                                  <p class="text-lg font-semibold text-slate-700 dark:text-slate-300">$ {{ debt.initialAmount.toFixed(2) }}</p>
+                                  <p class="text-lg font-semibold text-slate-700 dark:text-slate-300">{{ debt.initialAmount | formatUsd }}</p>
                                 </div>
                               </div>
 
@@ -206,7 +206,7 @@
                                 <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
                                 <div>
                                   <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Restante</p>
-                                  <p class="text-lg font-black text-red-600 dark:text-red-400">$ {{ debt.remainingAmount.toFixed(2) }}</p>
+                                  <p class="text-lg font-black text-red-600 dark:text-red-400">{{ debt.remainingAmount | formatUsd }}</p>
                                 </div>
                               </div>
 
@@ -244,7 +244,7 @@
                             <div class="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 px-3 py-2">
                               <i class="pi pi-wallet text-blue-600 dark:text-blue-400 text-sm shrink-0"></i>
                               <p class="text-xs text-blue-700 dark:text-blue-300">
-                                Saldo excedente aplicado: <span class="font-semibold">$ {{ (debt.surplusAmountApplied ?? 0).toFixed(2) }}</span>
+                                Saldo excedente aplicado: <span class="font-semibold">{{ (debt.surplusAmountApplied ?? 0) | formatUsd }}</span>
                               </p>
                             </div>
                             }
@@ -290,7 +290,7 @@
                   </div>
                   <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Pagado</p>
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ {{ stats.totalPaid.toFixed(2) }}</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.totalPaid | formatUsd }}</p>
                   </div>
                 </div>
                 <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow border border-gray-100 dark:border-gray-700 flex items-center">
@@ -308,7 +308,7 @@
                   </div>
                   <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio de Pago</p>
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">$ {{ stats.averagePayment.toFixed(2) }}</p>
+                    <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.averagePayment | formatUsd }}</p>
                   </div>
                 </div> -->
               </div>
@@ -485,7 +485,7 @@
           <td class="py-2">
             <div class="flex flex-col gap-0.5">
               <span class="text-sm font-semibold line-through text-gray-500">
-                $ {{ payment.amount.toFixed(2) }}
+                {{ payment.amount | formatUsd }}
               </span>
               @if (payment.isBolivares && payment.amountInBolivares) {
                 <span class="text-[10px] text-gray-500 dark:text-gray-400 line-through leading-tight">

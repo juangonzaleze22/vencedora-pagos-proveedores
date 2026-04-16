@@ -16,6 +16,7 @@ import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { PaymentList } from '../shared/components/data/payment-list/payment-list';
 import { AuthContext } from '../contexts/auth.context';
+import { formatUsd } from '../shared/utils/format-usd';
 
 const MODAL_DATE_FILTER_OPTIONS: { label: string; value: 'today' | 'last7' | 'month' | 'all' }[] = [
   { label: 'Todo', value: 'all' },
@@ -51,6 +52,9 @@ export class SupervisorDashboard {
 
   readonly stats = this._stats.asReadonly();
   readonly loading = this._loading.asReadonly();
+
+  /** Total deuda con separadores de miles (misma regla que `formatUsd` en el resto de la app). */
+  formattedTotalDebt = computed(() => formatUsd(this._stats()?.totalDebt ?? 0));
 
   // Modal "Pagos Procesados"
   showProcessedPaymentsModal = signal<boolean>(false);

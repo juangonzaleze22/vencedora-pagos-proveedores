@@ -28,7 +28,7 @@
       
       <app-stat-card
         label="Total Deuda"
-        [value]="'$ ' + statsValue.totalDebt.toFixed(2)"
+        [value]="formattedTotalDebt()"
         icon="pi pi-dollar"
         iconColor="red" />
     </div>

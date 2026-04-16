@@ -7,6 +7,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { LazyImage } from '../../ui/lazy-image/lazy-image';
 import { Payment } from '../../../models/payment.model';
 import { MenuItem } from 'primeng/api';
+import { FormatUsdPipe } from '../../../pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-list',
@@ -17,7 +18,8 @@ import { MenuItem } from 'primeng/api';
     ButtonModule,
     MenuModule,
     TooltipModule,
-    LazyImage
+    LazyImage,
+    FormatUsdPipe
   ],
   templateUrl: './payment-list.html',
   styleUrl: './payment-list.scss'

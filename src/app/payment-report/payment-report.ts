@@ -32,6 +32,7 @@ import { AuthContext } from '../contexts/auth.context';
 import { Payment } from '../shared/models/payment.model';
 import { Provider } from '../shared/models/provider.model';
 import { formatLocalDate } from '../shared/utils/date.utils';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-report',
@@ -58,7 +59,8 @@ import { formatLocalDate } from '../shared/utils/date.utils';
     LazyImage,
     ConfirmDialog,
     OrderDetailDialog,
-    PaymentList
+    PaymentList,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './payment-report.html',
@@ -275,8 +277,8 @@ export class PaymentReport implements OnInit {
       id: d.id,
       label: `${this.getDebtDisplayTitle(d)} #${d.id}`,
       statusLabel: this.getStatusLabel(d.status),
-      initialAmount: (d.initialAmount ?? 0).toFixed(2),
-      remainingAmount: (d.remainingAmount ?? 0).toFixed(2),
+      initialAmount: d.initialAmount ?? 0,
+      remainingAmount: d.remainingAmount ?? 0,
       dueDate: d.dueDate,
       activePayments: this.getActivePaymentsCount(d),
       surplusAmountApplied: d.surplusAmountApplied ?? 0

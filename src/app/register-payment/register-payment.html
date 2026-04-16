@@ -192,13 +192,13 @@
               <ng-template let-debt pTemplate="item">
                 <div class="flex justify-between items-center">
                   <span>{{ getDebtDisplayTitle(debt) }} #{{ debt.id }}</span>
-                  <span class="ml-1 text-sm text-gray-500"> $ {{ debt.remainingAmount.toFixed(2) }}</span>
+                  <span class="ml-1 text-sm text-gray-500">{{ debt.remainingAmount | formatUsd }}</span>
                 </div>
               </ng-template>
               <ng-template let-debt pTemplate="selectedItem">
                 <div class="flex justify-between items-center w-full">
                   <span>{{ getDebtDisplayTitle(debt) }} #{{ debt.id }}</span>
-                  <span class="ml-1 text-sm text-gray-500"> $ {{ debt.remainingAmount.toFixed(2) }}</span>
+                  <span class="ml-1 text-sm text-gray-500">{{ debt.remainingAmount | formatUsd }}</span>
                 </div>
               </ng-template>
             </p-select>
@@ -262,7 +262,7 @@
               Monto en USD
               @if (getSelectedDebtRemainingAmount() > 0 && !paymentForm.get('pagoEnBolivares')?.value) {
                 <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">
-                  (Deuda: ${{ getSelectedDebtRemainingAmount().toFixed(2) }})
+                  (Deuda: {{ getSelectedDebtRemainingAmount() | formatUsd }})
                 </span>
               }
             </label>

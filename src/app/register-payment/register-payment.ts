@@ -25,6 +25,7 @@ import { SupplierService } from '../shared/services/supplier.service';
 import { SelectFilterService } from '../shared/services/select-filter.service';
 import { AuthContext } from '../contexts/auth.context';
 import { Provider, Debt } from '../shared/models/provider.model';
+import { FormatUsdPipe } from '../shared/pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-register-payment',
@@ -47,7 +48,8 @@ import { Provider, Debt } from '../shared/models/provider.model';
     ToastModule,
     IconFieldModule,
     InputIconModule,
-    TextareaModule
+    TextareaModule,
+    FormatUsdPipe
   ],
   providers: [MessageService],
   templateUrl: './register-payment.html',

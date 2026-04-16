@@ -6,6 +6,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ButtonModule } from 'primeng/button';
 import { Payment } from '../../../models/payment.model';
+import { FormatUsdPipe } from '../../../pipes/format-usd.pipe';
 
 @Component({
   selector: 'app-payment-autocomplete',
@@ -16,7 +17,8 @@ import { Payment } from '../../../models/payment.model';
     InputTextModule,
     IconFieldModule,
     InputIconModule,
-    ButtonModule
+    ButtonModule,
+    FormatUsdPipe
   ],
   templateUrl: './payment-autocomplete.html',
   styleUrl: './payment-autocomplete.scss'
