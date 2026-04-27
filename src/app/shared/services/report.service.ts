@@ -36,6 +36,31 @@ export interface DebtPaymentsResponse {
   };
 }
 
+/**
+ * Prioriza el excedente explícitamente aplicado sobre `surplusAmountAtCreation` (que a veces viene
+ * desalineado del restante). Además acota al máximo reducción posible (inicial − restante) para que
+ * el banner no contradiga las cifras de la deuda en pantalla.
+ */
+function normalizeDebtSurplusDisplay(debt: any): number {
+  const asFinite = (v: unknown): number | undefined =>
+    typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+
+  const raw =
+    asFinite(debt.surplusAmountApplied) ??
+    asFinite(debt.surplusApplied) ??
+    asFinite(debt.appliedSurplus) ??
+    asFinite(debt.surplusAmountAtCreation) ??
+    0;
+
+  const initial = asFinite(debt.initialAmount) ?? Number(debt.initialAmount);
+  const remaining = asFinite(debt.remainingAmount) ?? Number(debt.remainingAmount);
+  if (!Number.isFinite(initial) || !Number.isFinite(remaining)) {
+    return Math.max(0, raw);
+  }
+  const maxReduction = Math.max(0, initial - remaining);
+  return Math.min(Math.max(0, raw), maxReduction);
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   constructor(private apiService: ApiService) {}
@@ -96,7 +121,7 @@ export class ReportService {
               dueDate: parseLocalDate(debt.dueDate),
               createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
               updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined,
-              surplusAmountApplied: debt.surplusAmountAtCreation ?? debt.surplusAmountApplied ?? debt.surplusApplied ?? debt.appliedSurplus ?? 0
+              surplusAmountApplied: normalizeDebtSurplusDisplay(debt)
             }))
           };
         }
