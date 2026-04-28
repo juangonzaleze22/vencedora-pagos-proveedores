@@ -36,34 +36,42 @@ export interface DebtPaymentsResponse {
   };
 }
 
-/**
- * Prioriza el excedente explícitamente aplicado sobre `surplusAmountAtCreation` (que a veces viene
- * desalineado del restante). Además acota al máximo reducción posible (inicial − restante) para que
- * el banner no contradiga las cifras de la deuda en pantalla.
- */
-function normalizeDebtSurplusDisplay(debt: any): number {
-  const asFinite = (v: unknown): number | undefined =>
-    typeof v === 'number' && Number.isFinite(v) ? v : undefined;
-
-  const raw =
-    asFinite(debt.surplusAmountApplied) ??
-    asFinite(debt.surplusApplied) ??
-    asFinite(debt.appliedSurplus) ??
-    asFinite(debt.surplusAmountAtCreation) ??
-    0;
-
-  const initial = asFinite(debt.initialAmount) ?? Number(debt.initialAmount);
-  const remaining = asFinite(debt.remainingAmount) ?? Number(debt.remainingAmount);
-  if (!Number.isFinite(initial) || !Number.isFinite(remaining)) {
-    return Math.max(0, raw);
-  }
-  const maxReduction = Math.max(0, initial - remaining);
-  return Math.min(Math.max(0, raw), maxReduction);
-}
-
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   constructor(private apiService: ApiService) {}
+
+  /**
+   * Normaliza el restante de una deuda considerando excedente aplicado al crearla.
+   * Evita doble descuento cuando el backend ya lo aplicó.
+   */
+  private getAdjustedRemainingAmount(debt: any, surplusAmountApplied: number): number {
+    const rawRemaining = Number(debt?.remainingAmount ?? 0);
+    const initialAmount = Number(debt?.initialAmount ?? 0);
+    const payments = Array.isArray(debt?.payments) ? debt.payments : [];
+
+    if (surplusAmountApplied <= 0 || initialAmount <= 0) {
+      return rawRemaining;
+    }
+
+    const activePaid = payments.reduce((sum: number, p: any) => {
+      if (p?.deleted || p?.deletedAt) return sum;
+      return sum + Number(p?.amount ?? 0);
+    }, 0);
+
+    const expectedWithoutSurplus = Math.max(initialAmount - activePaid, 0);
+    const expectedWithSurplus = Math.max(initialAmount - activePaid - surplusAmountApplied, 0);
+
+    const distanceWithout = Math.abs(rawRemaining - expectedWithoutSurplus);
+    const distanceWith = Math.abs(rawRemaining - expectedWithSurplus);
+
+    // Si el restante reportado se parece más al cálculo sin excedente, aplicar descuento en frontend.
+    if (distanceWithout < distanceWith) {
+      return expectedWithSurplus;
+    }
+
+    // Si ya parece venir con excedente aplicado, respetar backend.
+    return rawRemaining;
+  }
 
   /**
    * Obtiene estadísticas del dashboard
@@ -116,13 +124,24 @@ export class ReportService {
             totalPaid: data.totalPaid,
             paymentCount: data.paymentCount,
             averagePayment: data.averagePayment,
-            debts: (data.debts || []).map((debt: any) => ({
-              ...debt,
-              dueDate: parseLocalDate(debt.dueDate),
-              createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
-              updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined,
-              surplusAmountApplied: normalizeDebtSurplusDisplay(debt)
-            }))
+            debts: (data.debts || []).map((debt: any) => {
+              const surplusAmountApplied = Number(
+                debt.surplusAmountAtCreation ??
+                debt.surplusAmountApplied ??
+                debt.surplusApplied ??
+                debt.appliedSurplus ??
+                0
+              );
+
+              return {
+                ...debt,
+                remainingAmount: this.getAdjustedRemainingAmount(debt, surplusAmountApplied),
+                dueDate: parseLocalDate(debt.dueDate),
+                createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
+                updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined,
+                surplusAmountApplied
+              };
+            })
           };
         }
         throw new Error(response.message || 'Error al obtener reporte');
