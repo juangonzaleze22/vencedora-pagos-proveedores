@@ -41,11 +41,24 @@ export class ReportService {
   constructor(private apiService: ApiService) {}
 
   /**
+   * Obtiene el monto efectivo/restante de la deuda priorizando el nuevo campo del backend.
+   */
+  private getDebtEffectiveAmount(debt: any): number {
+    const effectiveFromApi = Number(
+      debt?.effectiveAmmount ??
+      debt?.effectiveAmount ??
+      debt?.remainingAmount ??
+      0
+    );
+    return Number.isFinite(effectiveFromApi) ? effectiveFromApi : 0;
+  }
+
+  /**
    * Normaliza el restante de una deuda considerando excedente aplicado al crearla.
    * Evita doble descuento cuando el backend ya lo aplicó.
    */
   private getAdjustedRemainingAmount(debt: any, surplusAmountApplied: number): number {
-    const rawRemaining = Number(debt?.remainingAmount ?? 0);
+    const rawRemaining = this.getDebtEffectiveAmount(debt);
     const initialAmount = Number(debt?.initialAmount ?? 0);
     const payments = Array.isArray(debt?.payments) ? debt.payments : [];
 
@@ -136,6 +149,7 @@ export class ReportService {
               return {
                 ...debt,
                 remainingAmount: this.getAdjustedRemainingAmount(debt, surplusAmountApplied),
+                effectiveAmmount: this.getDebtEffectiveAmount(debt),
                 dueDate: parseLocalDate(debt.dueDate),
                 createdAt: debt.createdAt ? new Date(debt.createdAt) : undefined,
                 updatedAt: debt.updatedAt ? new Date(debt.updatedAt) : undefined,
