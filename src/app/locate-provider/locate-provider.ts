@@ -82,6 +82,8 @@ export class LocateProvider {
   orderForm: FormGroup;
   loading = signal<boolean>(false);
   editingOrderId = signal<number | null>(null);
+  /** Excedente ya aplicado a la deuda al abrir el formulario de edición (surplusAmountAtCreation / surplusAmountApplied) */
+  editingSurplusBaseline = signal(0);
   fechaVencimiento = signal<Date | null>(null);
   showConfirmDeleteProvider = signal<boolean>(false);
   providerToDelete = signal<Provider | null>(null);
@@ -111,14 +113,19 @@ export class LocateProvider {
     this.orderForm.get('diasCredito')?.valueChanges.subscribe(() => this.calculateDueDate());
   }
 
-  /** Máximo saldo excedente que se puede aplicar: mínimo entre monto de la deuda y saldo a favor del proveedor */
+  /**
+   * Máximo saldo excedente aplicable como nuevo total:
+   * - Creación: min(monto, saldo a favor).
+   * - Edición: min(monto, excedente ya aplicado + saldo a favor), para que el incremento no supere el crédito disponible.
+   */
   getMaxSurplusToApply(): number {
     const provider = this.provider;
     const available = provider?.totalCreditAvailable ?? 0;
-    if (available <= 0) return 0;
     const amount = this.orderForm.get('monto')?.value;
     const num = amount != null && amount !== '' ? Number(amount) : 0;
-    return Math.min(num, available);
+    const baseline = this.editingOrderId() !== null ? this.editingSurplusBaseline() : 0;
+    const capByCredit = baseline + available;
+    return Math.min(num, capByCredit);
   }
 
   /** Rellena el campo de excedente a aplicar con el máximo permitido */
@@ -373,14 +380,17 @@ export class LocateProvider {
     
 
       next: (order) => {
-        console.log("deuda", order);
+        const baseline = Number(
+          order.debt?.surplusAmountAtCreation ?? order.debt?.surplusAmountApplied ?? 0
+        );
+        this.editingSurplusBaseline.set(Number.isFinite(baseline) ? baseline : 0);
 
         this.orderForm.patchValue({
           title: order.title ?? '',
           fechaDespacho: order.dispatchDate,
           diasCredito: order.creditDays,
           monto: order.amount,
-          surplusAmountToApply: null
+          surplusAmountToApply: this.editingSurplusBaseline()
         });
         this.editingOrderId.set(order.id);
         this.calculateDueDate();
@@ -468,6 +478,7 @@ export class LocateProvider {
     const onSuccess = () => {
       this.loading.set(false);
       this.editingOrderId.set(null);
+      this.editingSurplusBaseline.set(0);
       this.fechaVencimiento.set(null);
       this.orderForm.reset({ title: '', diasCredito: 30, surplusAmountToApply: null });
       this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
@@ -483,12 +494,29 @@ export class LocateProvider {
     };
 
     if (orderId !== null) {
-      this.orderService.update(orderId, {
-        title: (formValue.title ?? '').trim(),
-        dispatchDate,
-        creditDays: formValue.diasCredito,
-        amount: formValue.monto
-      }).subscribe({
+      const surplus =
+        formValue.surplusAmountToApply != null && formValue.surplusAmountToApply !== ''
+          ? Number(formValue.surplusAmountToApply)
+          : 0;
+      const maxSurplus = this.getMaxSurplusToApply();
+      if (surplus < 0 || surplus > maxSurplus) {
+        this.loading.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Valor no permitido',
+          detail: `El saldo excedente a aplicar debe estar entre 0 y ${formatUsd(maxSurplus)} (monto de la deuda y reglas de saldo a favor).`
+        });
+        return;
+      }
+      this.orderService
+        .update(orderId, {
+          title: (formValue.title ?? '').trim(),
+          dispatchDate,
+          creditDays: formValue.diasCredito,
+          amount: formValue.monto,
+          surplusAmountToApply: surplus
+        })
+        .subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',
@@ -548,6 +576,7 @@ export class LocateProvider {
 
   onCancel() {
     this.editingOrderId.set(null);
+    this.editingSurplusBaseline.set(0);
     this.fechaVencimiento.set(null);
     this.orderForm.reset({ diasCredito: 30, surplusAmountToApply: null });
   }
@@ -648,6 +677,7 @@ export class LocateProvider {
         this.selectedProvider.set(null);
         this.debts.set([]);
         this.editingOrderId.set(null);
+        this.editingSurplusBaseline.set(0);
         this.fechaVencimiento.set(null);
         this.orderForm.reset({ title: '', diasCredito: 30, surplusAmountToApply: null });
         // Refrescar sugerencias del autocomplete para que no aparezcan proveedores eliminados
@@ -705,8 +735,9 @@ export class LocateProvider {
         });
         if (this.editingOrderId() !== null) {
           this.editingOrderId.set(null);
+          this.editingSurplusBaseline.set(0);
           this.fechaVencimiento.set(null);
-          this.orderForm.reset({ title: '', diasCredito: 30 });
+          this.orderForm.reset({ title: '', diasCredito: 30, surplusAmountToApply: null });
         }
         this.reportService.getSupplierDetailed(currentProvider.id).subscribe({
           next: (report) => {

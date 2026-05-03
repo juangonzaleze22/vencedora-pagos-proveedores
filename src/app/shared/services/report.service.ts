@@ -12,6 +12,26 @@ export interface DashboardStats {
   totalDebt: number;
 }
 
+/** Crédito por excedente de un pago (saldo a favor del proveedor). */
+export interface SupplierCredit {
+  id: number;
+  paymentId: number;
+  originDebtId: number;
+  supplierId: number;
+  amount: number;
+  remaining: number;
+  status: string;
+  description?: string;
+  payment?: {
+    id: number;
+    senderName?: string;
+    paymentDate?: Date;
+    amount: number;
+  };
+  originDebt?: { id: number; title?: string };
+  createdAt?: Date;
+}
+
 export interface SupplierDetailedReport {
   supplier: Provider;
   totalPaid: number;
@@ -19,6 +39,7 @@ export interface SupplierDetailedReport {
   averagePayment: number;
   debts: Debt[];
   totalCreditAvailable?: number;
+  credits?: SupplierCredit[];
 }
 
 export interface DebtPaymentsResponse {
@@ -125,6 +146,33 @@ export class ReportService {
           const data = response.data as any;
           const s = data.supplier || {};
           const credit = data.totalCreditAvailable ?? s.totalCreditAvailable ?? 0;
+          const creditsRaw = Array.isArray(data.credits) ? data.credits : [];
+          const credits: SupplierCredit[] = creditsRaw.map((c: any) => ({
+            id: c.id,
+            paymentId: c.paymentId,
+            originDebtId: c.originDebtId,
+            supplierId: c.supplierId,
+            amount: Number(c.amount ?? 0),
+            remaining: Number(c.remaining ?? c.amount ?? 0),
+            status: c.status || 'AVAILABLE',
+            description: c.description,
+            payment: c.payment
+              ? {
+                  id: c.payment.id,
+                  senderName: c.payment.senderName,
+                  amount: Number(c.payment.amount ?? 0),
+                  paymentDate: parseLocalDateOptional(c.payment.paymentDate)
+                }
+              : undefined,
+            originDebt: c.originDebt
+              ? {
+                  id: c.originDebt.id,
+                  title: c.originDebt.title
+                }
+              : undefined,
+            createdAt: c.createdAt ? new Date(c.createdAt) : undefined
+          }));
+
           return {
             supplier: {
               ...s,
@@ -134,6 +182,7 @@ export class ReportService {
               updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined
             } as Provider,
             totalCreditAvailable: credit,
+            credits,
             totalPaid: data.totalPaid,
             paymentCount: data.paymentCount,
             averagePayment: data.averagePayment,

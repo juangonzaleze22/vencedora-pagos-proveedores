@@ -24,7 +24,7 @@ import { LazyImage } from '../shared/components/ui/lazy-image/lazy-image';
 import { ConfirmDialog } from '../shared/components/ui/confirm-dialog/confirm-dialog';
 import { OrderDetailDialog } from '../shared/components/ui/order-detail-dialog/order-detail-dialog';
 import { PaymentList } from '../shared/components/data/payment-list/payment-list';
-import { ReportService } from '../shared/services/report.service';
+import { ReportService, SupplierCredit } from '../shared/services/report.service';
 import { SupplierService } from '../shared/services/supplier.service';
 import { PaymentService } from '../shared/services/payment.service';
 import { SelectFilterService } from '../shared/services/select-filter.service';
@@ -254,6 +254,14 @@ export class PaymentReport implements OnInit {
     const data = this.reportData();
     return data?.debts || [];
   });
+
+  /** Créditos por excedente de pagos (detalle del saldo a favor). */
+  supplierCredits = computed((): SupplierCredit[] => {
+    const credits = this.reportData()?.credits;
+    return Array.isArray(credits) ? credits : [];
+  });
+
+  showCreditsDialog = signal<boolean>(false);
 
   totalDebt = computed(() => {
     const debts = this.debts();
@@ -842,6 +850,23 @@ export class PaymentReport implements OnInit {
 
   onCloseDeletedPaymentsDialog() {
     this.showDeletedPaymentsDialog.set(false);
+  }
+
+  openCreditsDialog() {
+    this.showCreditsDialog.set(true);
+  }
+
+  onCloseCreditsDialog() {
+    this.showCreditsDialog.set(false);
+  }
+
+  getCreditStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      AVAILABLE: 'Disponible',
+      APPLIED: 'Aplicado',
+      CONSUMED: 'Consumido'
+    };
+    return map[status] || status;
   }
 
   onCancel() {

@@ -374,7 +374,11 @@
             }
           </div>
 
-          @if (!editingOrderId() && (provider && (provider.totalCreditAvailable ?? 0) > 0)) {
+          @if (provider && (
+            !editingOrderId()
+              ? ((provider.totalCreditAvailable ?? 0) > 0)
+              : ((provider.totalCreditAvailable ?? 0) > 0 || editingSurplusBaseline() > 0)
+          )) {
           <div>
             <label class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-0.5 sm:mb-1" for="surplus-apply">Saldo excedente a aplicar ($)</label>
             <div class="flex gap-2 items-stretch w-full">
@@ -403,7 +407,15 @@
                 tooltipPosition="top" />
             </div>
             <p class="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Disponible: {{ (provider!.totalCreditAvailable ?? 0) | formatUsd }}. Máximo a aplicar: mínimo entre el monto de la deuda y el saldo a favor.
+              @if (editingOrderId()) {
+                Saldo a favor disponible: {{ (provider!.totalCreditAvailable ?? 0) | formatUsd }}.
+                @if (editingSurplusBaseline() > 0) {
+                  Ya aplicado a esta deuda: {{ editingSurplusBaseline() | formatUsd }}.
+                }
+                Máximo como nuevo total: mínimo entre el monto de la deuda y (excedente ya aplicado + saldo a favor).
+              } @else {
+                Disponible: {{ (provider!.totalCreditAvailable ?? 0) | formatUsd }}. Máximo a aplicar: mínimo entre el monto de la deuda y el saldo a favor.
+              }
             </p>
             @if (orderForm.get('surplusAmountToApply')?.invalid && orderForm.get('surplusAmountToApply')?.touched) {
             <small class="text-red-600">El valor debe ser mayor o igual a 0 y no superar el máximo permitido</small>

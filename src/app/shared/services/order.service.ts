@@ -20,6 +20,8 @@ export interface UpdateOrderData {
   dispatchDate: Date;
   creditDays: number;
   amount: number;
+  /** Nuevo total de excedente a aplicar a la deuda (≥ 0, ≤ amount; incrementos ≤ saldo disponible del proveedor) */
+  surplusAmountToApply?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -84,6 +86,9 @@ export class OrderService {
       amount: data.amount,
       title: data.title ?? ''
     };
+    if (data.surplusAmountToApply !== undefined) {
+      payload['surplusAmountToApply'] = data.surplusAmountToApply;
+    }
 
     return this.apiService.put<ProviderOrder>(`/orders/${id}`, payload).pipe(
       map(response => {

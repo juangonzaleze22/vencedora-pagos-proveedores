@@ -32,6 +32,9 @@ export interface OrderDetail extends ProviderOrder {
     id: number;
     status: 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
     remainingAmount: number;
+    /** Total de excedente aplicado a la deuda (lectura GET/PUT); coherente con surplusAmountToApply al guardar */
+    surplusAmountAtCreation?: number;
+    surplusAmountApplied?: number;
   };
   createdBy?: number;
   updatedAt?: Date;
